@@ -3,7 +3,7 @@ from openai import OpenAI
 import json
 import os
 
-DEEPSEEK_API_KEY = "sk-88c90c0c91c94912b276f19234eacc51"
+DEEPSEEK_API_KEY = "DEEPSEEK_API_KEY"
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
 HISTORICO_ARQUIVO = "historico_conversas.json"
