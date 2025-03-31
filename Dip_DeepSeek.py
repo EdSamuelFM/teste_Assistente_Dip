@@ -4,7 +4,8 @@ import json
 import os
 
 # Chave da API da DeepSeek
-DEEPSEEK_API_KEY = "sk-88c90c0c91c94912b276f19234eacc51"
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
 # Arquivo para histórico
