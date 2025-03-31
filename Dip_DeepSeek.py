@@ -52,17 +52,19 @@ def resposta_bot(mensagens: list[tuple[str, str]]) -> str:
     return response.choices[0].message.content
 
 def exibir_mensagem(role: str, conteudo: str) -> ft.Row:
-    alinha_item = ft.MainAxisAlignment.END if role == "user" else ft.MainAxisAlignment.START
-    cor_fundo = "#D3D3D3" if role == "user" else "#FFB700"
+    alinha_item = ft.MainAxisAlignment.CENTER
+    cor_fundo = "#0084FF" if role == "user" else "#3E4042"
+    cor_texto = "#FFFFFF"
 
     return ft.Row(
         controls=[
             ft.Container(
-                content=ft.Text(conteudo),
+                content=ft.Text(conteudo, color=cor_texto),
                 padding=10,
                 bgcolor=cor_fundo,
-                border_radius=5,
-                width=300,
+                border_radius=15,
+                width=700,  # Ajuste a largura para centralizar melhor
+                margin={"top": 5, "bottom": 5},
             )
         ],
         alignment=alinha_item,
@@ -71,9 +73,10 @@ def exibir_mensagem(role: str, conteudo: str) -> ft.Row:
 
 def main(pagina: ft.Page) -> None:
     pagina.title = "Assistente Virtual - Dip"
+    pagina.bgcolor = "#1E1E1E"
     
     chat_area = ft.Column(scroll=True, expand=True)
-    entrada_texto = ft.TextField(label="Digite sua mensagem", expand=True)
+    entrada_texto = ft.TextField(label="Digite sua mensagem", expand=True, bgcolor="#3E4042", color="#FFFFFF")
     progress_bar = ft.ProgressBar(visible=False)
 
     def enviar_mensagem(e: ft.ControlEvent) -> None:
