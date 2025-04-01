@@ -103,7 +103,7 @@ def exibir_mensagem(role: str, conteudo: str) -> ft.Row:
             ft.Container(
                 content=ft.Column(
                     controls=[
-                        ft.Text(conteudo, color=cor_texto),
+                        ft.Text(conteudo, color=cor_texto, selectable=True),
                         copiar_botao
                     ],
                     spacing=5
