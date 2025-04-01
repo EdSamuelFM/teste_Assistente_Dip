@@ -1,6 +1,5 @@
 import flet as ft
 from openai import OpenAI
-import pyperclip
 import json
 import os
 
@@ -88,15 +87,7 @@ def exibir_mensagem(role: str, conteudo: str) -> ft.Row:
     cor_fundo = "#0084FF" if role == "user" else "#3E4042"
     cor_texto = "#FFFFFF"
 
-    def copiar_para_area_transferencia(e):
-        pyperclip.copy(conteudo)
-        print("Mensagem copiada para a área de transferência.")
-
-    copiar_botao = ft.ElevatedButton(
-        "Copiar",
-        on_click=copiar_para_area_transferencia,
-        visible=(role == "assistant")
-    )
+    
 
     return ft.Row(
         controls=[
@@ -104,7 +95,7 @@ def exibir_mensagem(role: str, conteudo: str) -> ft.Row:
                 content=ft.Column(
                     controls=[
                         ft.Text(conteudo, color=cor_texto, selectable=True),
-                        copiar_botao
+                        
                     ],
                     spacing=5
                 ),
