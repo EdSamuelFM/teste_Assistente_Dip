@@ -1,4 +1,4 @@
-{
+ {
 "conhecimento": [
     {"pergunta": "Que tipo de formatação de texto deve usar?", "resposta": "A formatação de texto nunca não deve incluir ### ou **. Pode seguir formatando com quebras de linhas ou emojis"},
     {"pergunta": "Quais são as certificações a prova d'agua e seus significados?", "resposta": "As certificações a prova d'agua são: IP66, IP67 e IP68. O IP66 é resistente a poeira e jatos de água, o IP67 é resistente a poeira e submersão em água por até 30 minutos e o IP68 é resistente a poeira e submersão em água por tempo indeterminado."},
