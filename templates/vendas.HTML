@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dip - Vendas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendas.css') }}">
+    <script src="https://kit.fontawesome.com/da0229b6d1.js" crossorigin="anonymous"></script>
+</head>
+<body class="body">
+    
+    <input type="checkbox" id="menu-toggle" class="menu-retratil"/>
+    <div class="coluna">
+       
+        <div class="cabecalho"> 
+            
+            <a class="titulo" href="/">dip</a>
+            
+            <label class="icone" for="menu-toggle">
+                <i class="fa-solid fa-bars fa-2xl"></i>
+            </label>
+        </div>
+        <div class="agentes">
+            <a class="agente_mk active" href="/marketing">Marketing</a>
+            <a class="agente_sp" href="/suporte">Suporte</a>
+            <a class="agente_vd" href="/vendas">Vendas</a>
+            <a class="agente_fc" href="/financeiro">Financeiro</a>
+        </div>
+        <div class="controle">
+            <button id="clear-history-button" class="limpa">Limpar Histórico</button>
+        </div>
+    </div>
+    
+    <div class="centro">
+        <div class="conversa">
+            <div id="chat-container" class="chat-container">            
+                <div class="mensagem">
+                        <textarea id="chat-input" class="texto" placeholder="Pergunte a Dip sobre as Vendas" rows="2"></textarea>
+                        <button id="send-button" class="button">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

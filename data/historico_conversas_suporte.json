@@ -1,0 +1,10 @@
+[
+    [
+        "user",
+        "Como instalar a DPsin?"
+    ],
+    [
+        "assistant",
+        "A instalação do Acionador DPSIN é simples e segue os seguintes passos:\n\n1. **Fixação**: \n   - Utilize as buchas e parafusos incluídos na embalagem para fixar o dispositivo na parede ou local desejado.\n\n2. **Conexões Elétricas**: \n   - O DPSIN é bivolt automático (127~220VAC), portanto não é necessário ajuste manual de tensão.\n   - Conecte os fios de alimentação conforme indicado no manual (geralmente entrada bivolt e saídas para sirenes/campainhas).\n\n3. **Programação**: \n   - Utilize o display digital para configurar horários e dias de acionamento (suporta até 100 programações por saída).\n   - As teclas do painel permitem navegar pelos menus de configuração.\n\n4. **Saídas**: \n   - Cada uma das 2 saídas suporta até 5A - conecte os dispositivos a serem controlados (sirenes, campainhas, etc).\n\n5. **Bateria de Backup**: \n   - A bateria interna mantém a programação por até 3 meses em caso de falta de energia.\n\n**Dica importante**: \n- Para instalações em ambientes úmidos, recomenda-se utilizar uma caixa de proteção adicional (não inclusa).\n\nO manual completo com diagramas está disponível na embalagem do produto. Em caso de dúvidas, o suporte técnico da Diponto pode ser contatado pelo email suporte@diponto.com.br ou telefone (51) 3334-8224."
+    ]
+]
