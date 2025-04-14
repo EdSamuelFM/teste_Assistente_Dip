@@ -12,12 +12,6 @@ from google.analytics.data_v1beta.types import (
 
 app = Flask(__name__)
 
-# Configuração do Google Analytics
-ga_client = BetaAnalyticsDataClient.from_service_account_json(
-    r'C:\Users\Comercial\Desktop\Programação\Python\programa\data\credenciais.json'
-)
-GA_PROPERTY_ID = "358341825"
-
 DEEPSEEK_API_KEY =  os.getenv("DEEPSEEK_API_KEY")
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
