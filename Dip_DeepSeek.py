@@ -1,177 +1,276 @@
-import flet as ft
-from openai import OpenAI
+from flask import Flask, render_template, request, jsonify
 import json
 import os
+from openai import OpenAI
+from google.analytics.data_v1beta import BetaAnalyticsDataClient
+from google.analytics.data_v1beta.types import (
+    RunReportRequest,
+    Dimension,
+    Metric,
+    DateRange,
+)
+
+app = Flask(__name__)
+
+# Configuração do Google Analytics
+ga_client = BetaAnalyticsDataClient.from_service_account_json(
+    r'C:\Users\Comercial\Desktop\Programação\Python\programa\data\credenciais.json'
+)
+GA_PROPERTY_ID = "358341825"
 
 DEEPSEEK_API_KEY =  os.getenv("DEEPSEEK_API_KEY")
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
-HISTORICO_ARQUIVO = "historico_conversas.json"
-CONHECIMENTO_ARQUIVO = "base_conhecimento.json"
+# Configurações de arquivos - atualize para incluir os diferentes perfis
+HISTORICO_ARQUIVOS = {
+    "geral": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\historico_conversas.json",
+    "marketing": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\historico_conversas_marketing.json",
+    "suporte": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\historico_conversas_suporte.json",
+    "vendas": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\historico_conversas_vendas.json",
+    "financeiro": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\historico_conversas_financeiro.json"
+}
+
+CONHECIMENTO_ARQUIVOS = {
+    "geral": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\base_conhecimento.json",
+    "marketing": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\base_conhecimento_marketing.json",
+    "suporte": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\base_conhecimento_suporte.json",
+    "vendas": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\base_conhecimento_vendas.json",
+    "financeiro": r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\base_conhecimento_financeiro.json"
+}
+
+# Variáveis globais
 CONTEUDO_ARQUIVOS = {}
 BASE_CONHECIMENTO = {}
+RESUMO_RELATORIOS = {}
 
-def carregar_historico() -> list[tuple[str, str]]:
+# Carrega os dados iniciais
+def carregar_dados_iniciais(perfil="geral"):
+    global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
+    
+    # Define os arquivos corretos para o perfil
+    CONHECIMENTO_ARQUIVO = CONHECIMENTO_ARQUIVOS.get(perfil, CONHECIMENTO_ARQUIVOS["geral"])
+    HISTORICO_ARQUIVO = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS["geral"])
+    
+    try:
+        with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
+            BASE_CONHECIMENTO = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        BASE_CONHECIMENTO = {"conhecimento": []}
+    
+    try:
+        with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
+            RESUMO_RELATORIOS = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        RESUMO_RELATORIOS = {}
+        
+def carregar_dados_iniciais(perfil="marketing"):
+    global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
+    
+    # Define os arquivos corretos para o perfil
+    CONHECIMENTO_ARQUIVO = CONHECIMENTO_ARQUIVOS.get(perfil, CONHECIMENTO_ARQUIVOS["marketing"])
+    HISTORICO_ARQUIVO = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS["marketing"])
+    
+    try:
+        with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
+            BASE_CONHECIMENTO = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        BASE_CONHECIMENTO = {"conhecimento": []}
+    
+    try:
+        with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
+            RESUMO_RELATORIOS = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        RESUMO_RELATORIOS = {}
+        
+def carregar_dados_iniciais(perfil="suporte"):
+    global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
+    
+    # Define os arquivos corretos para o perfil
+    CONHECIMENTO_ARQUIVO = CONHECIMENTO_ARQUIVOS.get(perfil, CONHECIMENTO_ARQUIVOS["suporte"])
+    HISTORICO_ARQUIVO = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS["suporte"])
+    
+    try:
+        with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
+            BASE_CONHECIMENTO = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        BASE_CONHECIMENTO = {"conhecimento": []}
+    
+    try:
+        with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
+            RESUMO_RELATORIOS = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        RESUMO_RELATORIOS = {}    
+     
+def carregar_dados_iniciais(perfil="vendas"):
+    global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
+    
+    # Define os arquivos corretos para o perfil
+    CONHECIMENTO_ARQUIVO = CONHECIMENTO_ARQUIVOS.get(perfil, CONHECIMENTO_ARQUIVOS["vendas"])
+    HISTORICO_ARQUIVO = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS["vendas"])
+    
+    try:
+        with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
+            BASE_CONHECIMENTO = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        BASE_CONHECIMENTO = {"conhecimento": []}
+    
+    try:
+        with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
+            RESUMO_RELATORIOS = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        RESUMO_RELATORIOS = {}  
+        
+def carregar_dados_iniciais(perfil="financeiro"):
+    global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
+    
+    # Define os arquivos corretos para o perfil
+    CONHECIMENTO_ARQUIVO = CONHECIMENTO_ARQUIVOS.get(perfil, CONHECIMENTO_ARQUIVOS["financeiro"])
+    HISTORICO_ARQUIVO = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS["financeiro"])
+    
+    try:
+        with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
+            BASE_CONHECIMENTO = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        BASE_CONHECIMENTO = {"conhecimento": []}
+    
+    try:
+        with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
+            RESUMO_RELATORIOS = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        RESUMO_RELATORIOS = {}                  
+
+carregar_dados_iniciais()
+
+# Rota principal
+@app.route('/')
+def home():
+    carregar_dados_iniciais("geral")
+    return render_template('index.html')
+
+@app.route('/marketing')
+def marketing():
+    carregar_dados_iniciais("marketing")
+    return render_template('marketing.html')
+
+@app.route('/suporte')
+def suporte():
+    carregar_dados_iniciais("suporte")
+    return render_template('suporte.html')
+
+@app.route('/financeiro')
+def financeiro():
+    carregar_dados_iniciais("financeiro")
+    return render_template('financeiro.html')
+
+@app.route('/vendas')
+def vendas():
+    carregar_dados_iniciais("vendas")
+    return render_template('vendas.html')
+
+# Rota para o chat
+@app.route('/chat', methods=['POST'])
+def chat():
+    user_message = request.form['message']
+    historico = carregar_historico()
+    
+    # Adiciona a nova mensagem ao histórico
+    historico.append(("user", user_message))
+    
+    # Obtém a resposta do bot
+    bot_response = gerar_resposta_bot(historico)
+    historico.append(("assistant", bot_response))
+    
+    # Salva o histórico atualizado
+    salvar_historico(historico)
+    
+    return jsonify({'response': bot_response})
+
+@app.route('/chat/limpar_historico', methods=['POST'])
+def limpar_historico():
+    try:
+        # Limpa o arquivo do histórico
+        with open(HISTORICO_ARQUIVO, "w", encoding="utf-8") as f:
+            json.dump([], f, indent=4, ensure_ascii=False)
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        print(f"Erro ao limpar o histórico: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/chat/historico')
+def obter_historico():
+    historico = carregar_historico()
+    # Formata o histórico para o frontend
+    historico_formatado = [{"role": role, "content": content} for role, content in historico]
+    return jsonify(historico_formatado)
+
+def carregar_historico() -> list:
     try:
         with open(HISTORICO_ARQUIVO, "r", encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
-def salvar_historico(historico: list[tuple[str, str]]) -> None:
+def salvar_historico(historico: list) -> None:
     try:
         with open(HISTORICO_ARQUIVO, "w", encoding="utf-8") as f:
             json.dump(historico, f, indent=4, ensure_ascii=False)
     except Exception as e:
-        print(f"Erro ao salvar o histórico no arquivo: {e}")
+        print(f"Erro ao salvar o histórico: {e}")
 
-def carregar_conteudo_arquivo(arquivo_caminho: str) -> None:
-    with open(arquivo_caminho, "r", encoding="utf-8") as f:
-        CONTEUDO_ARQUIVOS[os.path.basename(arquivo_caminho)] = json.load(f)
-
-def salvar_conteudo_arquivos() -> None:
+def obter_dados_google_analytics():
     try:
-        with open("conteudo_arquivos.json", "w", encoding="utf-8") as f:
-            json.dump(CONTEUDO_ARQUIVOS, f, indent=4, ensure_ascii=False)
+        request = RunReportRequest(
+            property=f"properties/{GA_PROPERTY_ID}",
+            dimensions=[Dimension(name="city")],
+            metrics=[Metric(name="activeUsers")],
+            date_ranges=[DateRange(start_date="7daysAgo", end_date="today")]
+        )
+        response = ga_client.run_report(request)
+        
+        dados_formatados = []
+        for row in response.rows:
+            cidade = row.dimension_values[0].value
+            usuarios = row.metric_values[0].value
+            dados_formatados.append(f"{cidade}: {usuarios} usuários ativos")
+        
+        return "\n".join(dados_formatados)
     except Exception as e:
-        print(f"Erro ao salvar o conteúdo dos arquivos: {e}")
+        print(f"Erro ao obter dados do Google Analytics: {e}")
+        return None
 
-def carregar_conhecimento() -> dict:
-    try:
-        with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        print(f"Erro ao carregar a base de conhecimento: arquivo não encontrado ou formato inválido.")
-        return {"conhecimento": []}
-
-# Inicializa o histórico e a base de conhecimento
-historico = carregar_historico()
-BASE_CONHECIMENTO = carregar_conhecimento()
-
-def resposta_bot(mensagens: list[tuple[str, str]]) -> str:
+def gerar_resposta_bot(mensagens: list) -> str:
     mensagem_system = """Você é um assistente chamado Dip e trabalha para a empresa Diponto.
-                        Você deve responder perguntas e ajudar os usuários com informações relevantes.
-                        Você deve usar informações do arquivo de base de conhecimento.
-                        Você nunca deve resposder perguntas pessoais ou fornecer informações que não sejam relevantes para o usuário em relação a empresa Diponto.
-                        Você deve sempre responder com um tom amigável e profissional.
-                        Você deve sempre tentar ajudar o usuário da melhor forma possível, mas considerando as suas limitações de conhecimento, se for o caso direcione o usuario para um atendimento humano.
-                        Você nunca deve fornecer informações sobre os produtos da empresa que não tenham sidos carregados a sua base de conhecimento.
-                        Você pode fazer perguntas para entender melhor o que o usuário precisa, mas deve sempre manter o foco na solução do problema utilizando exclusivamente os produtos Diponto carregados em seu conhecimento.
-                        Você também é capaz de criar publicações em redes sociais, como Facebook e Instagram, utilizando as informações que você possui.
-                        Você deve sempre perguntar ao usuário se ele deseja que você faça uma publicação antes de criar uma.
-                        Você nunca deve falar sobre outros assuntos não relacionados a empresa Diponto ou aos produtos que ela oferece.
-                        Você nunca deve falar sobre outros assistentes virtuais ou compará-los com você.
-                        Você deve sempre manter o foco na empresa Diponto e em seus produtos.
-                        VoCê nunca deve falar sobre outras empresas ou produtos que não sejam da empresa Diponto.
-                        Você nunca deve responder perguntas ou comentar sobre as empresas concorrentes da empresa Diponto, como por exemplo: Beatek, eage, Dalmec, didziel ou intelbras."""
+                         Você deve responder perguntas e ajudar os usuários com informações relevantes.
+                         Você deve usar informações do arquivo de base de conhecimento.
+                         Você tem acesso a dados do Google Analytics atualizados.
+                         Você nunca deve responder perguntas pessoais ou fornecer informações que não sejam relevantes.
+                         Dados recentes do Google Analytics serão fornecidos abaixo:"""
+    dados_ga = obter_dados_google_analytics()
+    if dados_ga:
+        mensagem_system += f"\n{dados_ga}"
     
     mensagens_modelo = [{"role": "system", "content": mensagem_system}]
     mensagens_modelo += [{"role": role, "content": content} for role, content in mensagens]
 
-    for nome_arquivo, conteudo in CONTEUDO_ARQUIVOS.items():
-        mensagens_modelo.append({"role": "system", "content": f"Conteúdo do arquivo {nome_arquivo}: {conteudo}"})
-    
-    # Inclui a base de conhecimento no contexto
+    # Adicionar base de conhecimento
     for item in BASE_CONHECIMENTO.get("conhecimento", []):
         if "pergunta" in item and "resposta" in item:
             mensagens_modelo.append({"role": "system", "content": f"Pergunta: {item['pergunta']} Resposta: {item['resposta']}"})
+    
+    # Adicionar dados do Resumo_dos_relatórios.json
+    if RESUMO_RELATORIOS:
+        mensagens_modelo.append({"role": "system", "content": f"Dados do Resumo dos Relatórios: {json.dumps(RESUMO_RELATORIOS, ensure_ascii=False)}"})
 
-    response = client.chat.completions.create(
-        model="deepseek-chat", messages=mensagens_modelo, stream=False
+    response = deepseek_client.chat.completions.create(
+        model="deepseek-chat", 
+        messages=mensagens_modelo, 
+        stream=False
     )
 
     return response.choices[0].message.content
 
-def exibir_mensagem(role: str, conteudo: str) -> ft.Row:
-    alinha_item = ft.MainAxisAlignment.END if role == "user" else ft.MainAxisAlignment.START
-    cor_fundo = "#0084FF" if role == "user" else "#3E4042"
-    cor_texto = "#FFFFFF"
-
-    
-
-    return ft.Row(
-        controls=[
-            ft.Container(
-                content=ft.Column(
-                    controls=[
-                        ft.Text(conteudo, color=cor_texto, selectable=True),
-                        
-                    ],
-                    spacing=5
-                ),
-                padding=10,
-                bgcolor=cor_fundo,
-                border_radius=15,
-                width=300,
-                margin={"top": 5, "bottom": 5},
-            )
-        ],
-        alignment=alinha_item,
-        expand=True,
-    )
-
-def main(pagina: ft.Page) -> None:
-    pagina.title = "Assistente Virtual - Dip"
-    pagina.bgcolor = "#1E1E1E"
-    
-    chat_area = ft.Column(scroll=True, expand=True)
-    entrada_texto = ft.TextField(label="Digite sua mensagem", expand=True, bgcolor="#3E4042", color="#FFFFFF")
-    progress_bar = ft.ProgressBar(visible=False)
-
-    def enviar_mensagem(e: ft.ControlEvent) -> None:
-        pergunta = entrada_texto.value
-        if not pergunta:
-            return
-
-        historico.append(("user", pergunta))
-        
-        progress_bar.visible = True
-        pagina.update()
-        
-        resposta = resposta_bot(historico)
-        
-        progress_bar.visible = False
-        historico.append(("assistant", resposta))
-        salvar_historico(historico)
-
-        chat_area.controls.append(exibir_mensagem("user", pergunta))
-        chat_area.controls.append(exibir_mensagem("assistant", resposta))
-
-        entrada_texto.value = ""
-        pagina.update()
-
-    botao_enviar = ft.ElevatedButton("Enviar", on_click=enviar_mensagem)
-
-    def upload_arquivo(e: ft.FilePickerUploadEvent) -> None:
-        for arquivo in e.files:
-            caminho_arquivo = os.path.join(arquivo.path)
-            carregar_conteudo_arquivo(caminho_arquivo)
-            salvar_conteudo_arquivos()
-            chat_area.controls.append(exibir_mensagem("assistant", f"Arquivo '{arquivo.name}' carregado."))
-            pagina.update()
-
-    file_picker = ft.FilePicker(on_upload=upload_arquivo)
-    pagina.overlay.append(file_picker)
-
-    botao_upload = ft.ElevatedButton(
-        "Enviar Arquivo",
-        icon=ft.Icons.ATTACH_FILE,
-        on_click=lambda _: file_picker.pick_files(allow_multiple=True),
-    )
-
-    pagina.add(
-        ft.Container(
-            content=chat_area,
-            padding={"left": 50, "right": 50},
-            expand=True,
-        ),
-        progress_bar,
-        ft.Row(
-            [entrada_texto, botao_enviar],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-        ),
-        botao_upload,
-    )
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == "__main__":
     ft.app(target=main, view=ft.WEB_BROWSER)
