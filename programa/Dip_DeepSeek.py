@@ -126,7 +126,7 @@ carregar_dados_iniciais()
 @app.route('/')
 def home():
     carregar_dados_iniciais("geral")
-    return render_template('index.html')
+    return render_template('programa/templates/index.HTML')
 
 @app.route('/marketing')
 def marketing():
