@@ -5,10 +5,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearHistoryButton = document.getElementById('clear-history-button');
 
     // Função para lidar com a troca de perfil
-    function handleProfileChange(e) {
-        e.preventDefault();
-        window.location.href = this.href;
-    }
+   function handleProfileChange(e) {
+    e.preventDefault();
+    const perfil = this.getAttribute('data-perfil');
+    carregarHistorico(perfil);
+    window.history.pushState({}, '', this.href);
+}
 
     // Configura os listeners para os links de perfil
     document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_fc').forEach(link => {
