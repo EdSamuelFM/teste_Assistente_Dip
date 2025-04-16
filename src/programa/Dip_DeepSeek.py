@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify
 import json
 import os
 from openai import OpenAI
+import sys
+sys.path.append('/opt/render/project/src')
 
 
 app = Flask(__name__)
@@ -9,7 +11,7 @@ app = Flask(__name__)
 GA_PROPERTY_ID = "358341825"
 
 # Configuração do DeepSeek
-DEEPSEEK_API_KEY = "sk-88c90c0c91c94912b276f19234eacc51"
+DEEPSEEK_API_KEY = "DEEPSEEK_API_KEY"
 deepseek_client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
 # Caminhos relativos
