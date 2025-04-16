@@ -11,7 +11,9 @@ from google.analytics.data_v1beta.types import (
 )
 
 # Configuração do Flask
-app = Flask(__name__)
+app = Flask(__name__, 
+            template_folder='templates',
+            static_folder='static')
 
 # Configuração com variáveis de ambiente
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
