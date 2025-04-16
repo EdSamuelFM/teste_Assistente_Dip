@@ -28,7 +28,7 @@ ARQUIVOS_JSON = {
     'historico': {
         'geral': 'historico_conversas.json',
         'financeiro': 'historico_conversas_financeiro.json',
-        'marketing': 'historico_conversas_marketing.json',
+        'marketing': '_conversas_marketing.json',
         'suporte': 'historico_conversas_suporte.json',
         'vendas': 'historico_conversas_vendas.json'
     }
@@ -60,9 +60,9 @@ RESUMO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
 @app.route('/chat/historico')
 def obter_historico():
     try:
-        # Verifica qual perfil está ativo (você precisará implementar essa lógica)
+        # Verifica qual perfil está ativo
         perfil = request.args.get('perfil', 'geral')
-        arquivo_historico = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS['geral'])
+        arquivo_historico = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'].get(perfil, ARQUIVOS_JSON['historico']['geral']))
         
         if not os.path.exists(arquivo_historico):
             with open(arquivo_historico, 'w', encoding='utf-8') as f:
@@ -123,16 +123,6 @@ def carregar_historico() -> list:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
-
-@app.route('/chat/historico')
-def obter_historico():
-    try:
-        historico = carregar_historico()
-        historico_formatado = [{"role": role, "content": content} for role, content in historico]
-        return jsonify(historico_formatado)
-    except Exception as e:
-        print(f"Erro ao carregar histórico: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.after_request
 def add_header(response):
