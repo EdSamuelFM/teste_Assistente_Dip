@@ -17,21 +17,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Listener para o botão de limpar histórico
     clearHistoryButton.addEventListener('click', function() {
+        if (!confirm('Tem certeza que deseja limpar todo o histórico de conversas?')) {
+            return;
+        }
+        
         fetch('/chat/limpar_historico', {
             method: 'POST',
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao limpar histórico');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === "success") {
                 chatContainer.innerHTML = '';
-                alert('Histórico limpo com sucesso!');
+                showToast('Histórico limpo com sucesso!');
             } else {
-                alert('Erro ao limpar o histórico: ' + data.message);
+                throw new Error(data.message || 'Erro desconhecido');
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            alert('Erro ao limpar o histórico.');
+            showToast('Erro ao limpar o histórico: ' + error.message, 'error');
         });
     });
 
@@ -39,12 +48,33 @@ document.addEventListener('DOMContentLoaded', function() {
     carregarHistorico();
 
     function carregarHistorico() {
+        showLoadingIndicator();
+        
         fetch('/chat/historico')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar histórico');
+                }
+                return response.json();
+            })
             .then(data => {
+                if (!Array.isArray(data)) {
+                    throw new Error('Formato de histórico inválido');
+                }
+                
+                chatContainer.innerHTML = '';
                 data.forEach(msg => {
-                    addMessage(msg.role === 'user' ? 'user' : 'bot', msg.content);
+                    if (msg.role && msg.content) {
+                        addMessage(msg.role, msg.content);
+                    }
                 });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar histórico:', error);
+                addMessage('bot', 'Não foi possível carregar o histórico de conversas.');
+            })
+            .finally(() => {
+                hideLoadingIndicator();
             });
     }
 
@@ -57,26 +87,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function formatarMensagem(texto) {
-        texto = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        texto = texto.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        texto = texto.replace(/_(.*?)_/g, '<em>$1</em>');
-        texto = texto.replace(/`(.*?)`/g, '<code>$1</code>');
-        texto = texto.replace(/\n/g, '<br>');
-        texto = texto.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (!texto) return '';
         
-        const allowedTags = {
-            '&lt;strong&gt;': '<strong>',
-            '&lt;/strong&gt;': '</strong>',
-            '&lt;em&gt;': '<em>',
-            '&lt;/em&gt;': '</em>',
-            '&lt;code&gt;': '<code>',
-            '&lt;/code&gt;': '</code>',
-            '&lt;br&gt;': '<br>'
-        };
+        // Proteção XSS primeiro
+        texto = texto.toString()
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         
-        Object.keys(allowedTags).forEach(escaped => {
-            texto = texto.replace(new RegExp(escaped, 'g'), allowedTags[escaped]);
-        });
+        // Formatação de markdown
+        texto = texto
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
         
         return texto;
     }
@@ -90,6 +114,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return typingDiv;
     }
 
+    function showLoadingIndicator() {
+        // Implemente um indicador de carregamento se necessário
+    }
+
+    function hideLoadingIndicator() {
+        // Implemente a ocultação do indicador
+    }
+
+    function showToast(message, type = 'success') {
+        // Implemente um sistema de notificação/toast
+        console.log(`${type}: ${message}`);
+        alert(message); // Temporário - substitua por um toast bonito
+    }
+
     // Listener para o botão de enviar
     sendButton.addEventListener('click', enviarMensagem);
 
@@ -101,31 +139,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function enviarMensagem() {
+    async function enviarMensagem() {
         const message = chatInput.value.trim();
-        if (message) {
-            addMessage('user', message);
-            chatInput.value = '';
+        if (!message) return;
 
-            const typingDiv = addTypingIndicator();
+        addMessage('user', message);
+        chatInput.value = '';
 
-            fetch('/chat', {
+        const typingDiv = addTypingIndicator();
+
+        try {
+            const response = await fetch('/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: `message=${encodeURIComponent(message)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                typingDiv.remove();
-                addMessage('bot', data.response);
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                typingDiv.remove();
-                addMessage('bot', 'Desculpe, ocorreu um erro ao processar sua mensagem.');
             });
+
+            if (!response.ok) {
+                throw new Error('Erro no servidor');
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            if (!data.response) {
+                throw new Error('Resposta inválida do servidor');
+            }
+
+            typingDiv.remove();
+            addMessage('bot', data.response);
+            
+        } catch (error) {
+            console.error('Erro:', error);
+            typingDiv.remove();
+            addMessage('bot', `Desculpe, ocorreu um erro: ${error.message}`);
         }
     }
 });
