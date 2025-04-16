@@ -92,20 +92,13 @@ def vendas():
 # Rota para o chat
 @app.route('/chat', methods=['POST'])
 def chat():
-    user_message = request.form['message']
-    historico = carregar_historico()
-    
-    # Adiciona a nova mensagem ao histórico
-    historico.append(("user", user_message))
-    
-    # Obtém a resposta do bot
-    bot_response = gerar_resposta_bot(historico)
-    historico.append(("assistant", bot_response))
-    
-    # Salva o histórico atualizado
-    salvar_historico(historico)
-    
-    return jsonify({'response': bot_response})
+    try:
+        user_message = request.form['message']
+        print(f"Mensagem recebida: {user_message}")
+        return jsonify({'response': 'Mensagem recebida!'})  # Simples para teste
+    except Exception as e:
+        print(f"Erro no chat: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/chat/limpar_historico', methods=['POST'])
 def limpar_historico():
