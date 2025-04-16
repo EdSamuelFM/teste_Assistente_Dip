@@ -47,38 +47,38 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Carrega o histórico ao iniciar
-    carregarHistorico();
+    carregarHistorico(perfil);
 
-    function carregarHistorico() {
+    function carregarHistorico(perfil) {
         showLoadingIndicator();
         
-        fetch('/chat/historico')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar histórico');
+        fetch(`/chat/historico?perfil=${perfil}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao carregar histórico');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) {
+                throw new Error('Formato de histórico inválido');
+            }
+            
+            chatContainer.innerHTML = '';
+            data.forEach(msg => {
+                if (msg.role && msg.content) {
+                    addMessage(msg.role, msg.content);
                 }
-                return response.json();
-            })
-            .then(data => {
-                if (!Array.isArray(data)) {
-                    throw new Error('Formato de histórico inválido');
-                }
-                
-                chatContainer.innerHTML = '';
-                data.forEach(msg => {
-                    if (msg.role && msg.content) {
-                        addMessage(msg.role, msg.content);
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Erro ao carregar histórico:', error);
-                addMessage('bot', 'Não foi possível carregar o histórico de conversas.');
-            })
-            .finally(() => {
-                hideLoadingIndicator();
             });
-    }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar histórico:', error);
+            addMessage('bot', 'Não foi possível carregar o histórico de conversas.');
+        })
+        .finally(() => {
+            hideLoadingIndicator();
+        });
+}
 
     function addMessage(sender, message) {
         const messageDiv = document.createElement('div');
