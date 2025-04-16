@@ -14,7 +14,7 @@ DEEPSEEK_API_KEY = "DEEPSEEK_API_KEY"
 deepseek_client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
 # Caminhos relativos
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JSON_DIR = os.path.join(BASE_DIR, 'data', 'json')
 
 # Configurações de arquivos - atualize para incluir os diferentes perfis
