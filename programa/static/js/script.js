@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Função para lidar com a troca de perfil
     function handleProfileChange(e) {
         e.preventDefault();
-        // Força o recarregamento completo da página
         window.location.href = this.href;
     }
 
@@ -58,21 +57,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function formatarMensagem(texto) {
-        // Negrito
         texto = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Itálico
         texto = texto.replace(/\*(.*?)\*/g, '<em>$1</em>');
         texto = texto.replace(/_(.*?)_/g, '<em>$1</em>');
-        
-        // Código inline
         texto = texto.replace(/`(.*?)`/g, '<code>$1</code>');
-        
-        // Quebras de linha
         texto = texto.replace(/\n/g, '<br>');
-        
-        // Proteção XSS
         texto = texto.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
         const allowedTags = {
             '&lt;strong&gt;': '<strong>',
             '&lt;/strong&gt;': '</strong>',
@@ -90,26 +81,25 @@ document.addEventListener('DOMContentLoaded', function() {
         return texto;
     }
 
-   sendButton.addEventListener('click', function() {
-        const message = chatInput.value.trim();
-        if (!message) return;
-        
-        console.log("Enviando:", message);
-        fetch('/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `message=${encodeURIComponent(message)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Resposta:", data);
-            // Adicione a mensagem ao chat
-        })
-        .catch(error => console.error("Erro:", error));
+    function addTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot typing-indicator';
+        typingDiv.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return typingDiv;
+    }
+
+    // Listener para o botão de enviar
+    sendButton.addEventListener('click', enviarMensagem);
+
+    // Listener para tecla Enter
+    chatInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            enviarMensagem();
+        }
     });
-});
 
     function enviarMensagem() {
         const message = chatInput.value.trim();
@@ -117,7 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
             addMessage('user', message);
             chatInput.value = '';
 
-            // Adiciona a animação de "digitando"
             const typingDiv = addTypingIndicator();
 
             fetch('/chat', {
@@ -129,7 +118,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Remove a animação de "digitando"
                 typingDiv.remove();
                 addMessage('bot', data.response);
             })
@@ -139,14 +127,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 addMessage('bot', 'Desculpe, ocorreu um erro ao processar sua mensagem.');
             });
         }
-    }
-
-    function addTypingIndicator() {
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot typing-indicator';
-        typingDiv.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
-        chatContainer.appendChild(typingDiv);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        return typingDiv;
     }
 });
