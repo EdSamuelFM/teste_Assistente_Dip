@@ -1,104 +1,102 @@
-from flask import Flask, render_template, request, jsonify
-import json
 import os
+import json
+from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
-from google.analytics.data_v1beta import BetaAnalyticsDataClient
-from google.analytics.data_v1beta.types import (
-    RunReportRequest,
-    Dimension,
-    Metric,
-    DateRange,
-)
 
-# Configuração do Flask
 app = Flask(__name__, 
             template_folder='templates',
             static_folder='static')
 
-# Configuração com variáveis de ambiente
-DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
-deepseek_client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
-
-# Caminhos relativos
+# Configurações de caminhos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'static', 'json')
 
-# Configurações de arquivos
-HISTORICO_ARQUIVOS = {
-    "geral": os.path.join(DATA_DIR, "historico_conversas.json"),
-    "marketing": os.path.join(DATA_DIR, "historico_conversas_marketing.json"),
-    "suporte": os.path.join(DATA_DIR, "historico_conversas_suporte.json"),
-    "vendas": os.path.join(DATA_DIR, "historico_conversas_vendas.json"),
-    "financeiro": os.path.join(DATA_DIR, "historico_conversas_financeiro.json")
+# Verifica e cria diretório se não existir
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+# Lista de todos os seus arquivos JSON
+ARQUIVOS_JSON = {
+    'resumo': 'Resumo_dos_relatórios.json',
+    'base': {
+        'geral': 'base_conhecimento.json',
+        'financeiro': 'base_conhecimento_financeiro.json',
+        'marketing': 'base_conhecimento_marketing.json',
+        'suporte': 'base_conhecimento_suporte.json',
+        'vendas': 'base_conhecimento_vendas.json'
+    },
+    'historico': {
+        'geral': 'historico_conversas.json',
+        'financeiro': 'historico_conversas_financeiro.json',
+        'marketing': 'historico_conversas_marketing.json',
+        'suporte': 'historico_conversas_suporte.json',
+        'vendas': 'historico_conversas_vendas.json'
+    }
 }
 
-CONHECIMENTO_ARQUIVOS = {
-    "geral": os.path.join(DATA_DIR, "base_conhecimento.json"),
-    "marketing": os.path.join(DATA_DIR, "base_conhecimento_marketing.json"),
-    "suporte": os.path.join(DATA_DIR, "base_conhecimento_suporte.json"),
-    "vendas": os.path.join(DATA_DIR, "base_conhecimento_vendas.json"),
-    "financeiro": os.path.join(DATA_DIR, "base_conhecimento_financeiro.json")
-}
+# Cria arquivos se não existirem
+for perfil, arquivo in ARQUIVOS_JSON['historico'].items():
+    path = os.path.join(DATA_DIR, arquivo)
+    if not os.path.exists(path):
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump([], f)
 
-# Variáveis globais
-BASE_CONHECIMENTO = {}
-RESUMO_RELATORIOS = {}
+for perfil, arquivo in ARQUIVOS_JSON['base'].items():
+    path = os.path.join(DATA_DIR, arquivo)
+    if not os.path.exists(path):
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump({"conhecimento": []}, f)
 
-# Função unificada para carregar dados
-def carregar_dados_iniciais(perfil="geral"):
-    global BASE_CONHECIMENTO, RESUMO_RELATORIOS
-    
-    conhecimento_arquivo = CONHECIMENTO_ARQUIVOS.get(perfil)
-    historico_arquivo = HISTORICO_ARQUIVOS.get(perfil)
-    
+resumo_path = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
+if not os.path.exists(resumo_path):
+    with open(resumo_path, 'w', encoding='utf-8') as f:
+        json.dump({}, f)
+
+# Variável global para controle
+HISTORICO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico']['geral'])
+BASE_CONHECIMENTO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['base']['geral'])
+RESUMO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
+
+@app.route('/chat/historico')
+def obter_historico():
     try:
-        with open(conhecimento_arquivo, "r", encoding="utf-8") as f:
-            BASE_CONHECIMENTO = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        BASE_CONHECIMENTO = {"conhecimento": []}
+        with open(HISTORICO_ARQUIVO, 'r', encoding='utf-8') as f:
+            historico = json.load(f)
+        
+        if not isinstance(historico, list):
+            historico = []
+            
+        return jsonify([{"role": role, "content": content} for role, content in historico])
     
-    try:
-        with open(os.path.join(DATA_DIR, "Resumo_dos_relatórios.json"), "r", encoding="utf-8") as f:
-            RESUMO_RELATORIOS = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        RESUMO_RELATORIOS = {}
+    except Exception as e:
+        print(f"Erro ao carregar histórico: {str(e)}")
+        return jsonify([])
 
-# Rotas
-@app.route('/')
-def home():
-    carregar_dados_iniciais("geral")
-    return render_template('index.html')
-
-@app.route('/marketing')
-def marketing():
-    carregar_dados_iniciais("marketing")
-    return render_template('marketing.html')
-
-@app.route('/suporte')
-def suporte():
-    carregar_dados_iniciais("suporte")
-    return render_template('suporte.html')
-
-@app.route('/financeiro')
-def financeiro():
-    carregar_dados_iniciais("financeiro")
-    return render_template('financeiro.html')
-
-@app.route('/vendas')
-def vendas():
-    carregar_dados_iniciais("vendas")
-    return render_template('vendas.html')
-
-# Rota para o chat
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
-        user_message = request.form['message']
-        print(f"Mensagem recebida: {user_message}")
-        return jsonify({'response': 'Mensagem recebida!'})  # Simples para teste
+        message = request.form['message']
+        
+        # Carrega histórico atual
+        with open(HISTORICO_ARQUIVO, 'r', encoding='utf-8') as f:
+            historico = json.load(f)
+        
+        # Adiciona nova mensagem
+        historico.append(("user", message))
+        
+        # Gera resposta (implemente sua lógica com OpenAI aqui)
+        resposta = "Esta é uma resposta de exemplo"
+        historico.append(("assistant", resposta))
+        
+        # Salva histórico atualizado
+        with open(HISTORICO_ARQUIVO, 'w', encoding='utf-8') as f:
+            json.dump(historico, f, ensure_ascii=False, indent=4)
+        
+        return jsonify({"response": resposta})
+    
     except Exception as e:
-        print(f"Erro no chat: {e}")
-        return jsonify({'error': str(e)}), 500
+        print(f"Erro no chat: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/chat/limpar_historico', methods=['POST'])
 def limpar_historico():
