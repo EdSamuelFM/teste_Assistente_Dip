@@ -57,6 +57,26 @@ HISTORICO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico']['geral'])
 BASE_CONHECIMENTO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['base']['geral'])
 RESUMO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
 
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/marketing')
+def marketing():
+    return render_template('marketing.html')
+
+@app.route('/suporte')
+def suporte():
+    return render_template('suporte.html')
+
+@app.route('/financeiro')
+def financeiro():
+    return render_template('financeiro.html')
+
+@app.route('/vendas')
+def vendas()
+    return render_template('vendas.html')
+
 @app.route('/chat/historico')
 def obter_historico():
     try:
