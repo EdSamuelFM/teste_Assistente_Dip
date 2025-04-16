@@ -74,7 +74,7 @@ def financeiro():
     return render_template('financeiro.html')
 
 @app.route('/vendas')
-def vendas()
+def vendas():
     return render_template('vendas.html')
 
 @app.route('/chat/historico')
