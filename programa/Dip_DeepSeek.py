@@ -117,13 +117,6 @@ def limpar_historico():
         print(f"Erro ao limpar o histórico: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-def carregar_historico() -> list:
-    try:
-        with open(HISTORICO_ARQUIVO, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
 @app.after_request
 def add_header(response):
     """
