@@ -114,17 +114,13 @@ def limpar_historico():
 
 @app.route('/chat/historico')
 def obter_historico():
-    historico = carregar_historico()
-    # Formata o histórico para o frontend
-    historico_formatado = [{"role": role, "content": content} for role, content in historico]
-    return jsonify(historico_formatado)
-
-def carregar_historico() -> list:
     try:
-        with open(HISTORICO_ARQUIVO, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
+        historico = carregar_historico()
+        historico_formatado = [{"role": role, "content": content} for role, content in historico]
+        return jsonify(historico_formatado)
+    except Exception as e:
+        print(f"Erro ao carregar histórico: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.after_request
 def add_header(response):
