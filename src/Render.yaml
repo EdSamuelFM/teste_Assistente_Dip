@@ -2,7 +2,7 @@ services:
   - type: web
     name: dip-assistant
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r src/requirements.txt
     startCommand: gunicorn programa.Dip_DeepSeek:app
     envVars:
       - key: DEEPSEEK_API_KEY
