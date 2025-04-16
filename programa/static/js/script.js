@@ -90,16 +90,26 @@ document.addEventListener('DOMContentLoaded', function() {
         return texto;
     }
 
-    // Listener para o botão de enviar
-    sendButton.addEventListener('click', enviarMensagem);
-
-    // Listener para tecla Enter no campo de input
-    chatInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            enviarMensagem();
-        }
+   sendButton.addEventListener('click', function() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+        
+        console.log("Enviando:", message);
+        fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `message=${encodeURIComponent(message)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Resposta:", data);
+            // Adicione a mensagem ao chat
+        })
+        .catch(error => console.error("Erro:", error));
     });
+});
 
     function enviarMensagem() {
         const message = chatInput.value.trim();
