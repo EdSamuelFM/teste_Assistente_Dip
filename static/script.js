@@ -4,6 +4,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatContainer = document.getElementById('chat-container');
     const clearHistoryButton = document.getElementById('clear-history-button');
 
+    // Função para lidar com a troca de perfil
+    function handleProfileChange(e) {
+        e.preventDefault();
+        // Força o recarregamento completo da página
+        window.location.href = this.href;
+    }
+
+    // Configura os listeners para os links de perfil
+    document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_fc').forEach(link => {
+        link.addEventListener('click', handleProfileChange);
+    });
+
+    // Listener para o botão de limpar histórico
     clearHistoryButton.addEventListener('click', function() {
         fetch('/chat/limpar_historico', {
             method: 'POST',
@@ -45,40 +58,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function formatarMensagem(texto) {
-    // Negrito
-    texto = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Itálico
-    texto = texto.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    texto = texto.replace(/_(.*?)_/g, '<em>$1</em>');
-    
-    // Código inline
-    texto = texto.replace(/`(.*?)`/g, '<code>$1</code>');
-    
-    // Quebras de linha
-    texto = texto.replace(/\n/g, '<br>');
-    
-    // Proteção XSS
-    texto = texto.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const allowedTags = {
-        '&lt;strong&gt;': '<strong>',
-        '&lt;/strong&gt;': '</strong>',
-        '&lt;em&gt;': '<em>',
-        '&lt;/em&gt;': '</em>',
-        '&lt;code&gt;': '<code>',
-        '&lt;/code&gt;': '</code>',
-        '&lt;br&gt;': '<br>'
-    };
-    
-    Object.keys(allowedTags).forEach(escaped => {
-        texto = texto.replace(new RegExp(escaped, 'g'), allowedTags[escaped]);
-    });
-    
-    return texto;
-}
+        // Negrito
+        texto = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Itálico
+        texto = texto.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        texto = texto.replace(/_(.*?)_/g, '<em>$1</em>');
+        
+        // Código inline
+        texto = texto.replace(/`(.*?)`/g, '<code>$1</code>');
+        
+        // Quebras de linha
+        texto = texto.replace(/\n/g, '<br>');
+        
+        // Proteção XSS
+        texto = texto.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const allowedTags = {
+            '&lt;strong&gt;': '<strong>',
+            '&lt;/strong&gt;': '</strong>',
+            '&lt;em&gt;': '<em>',
+            '&lt;/em&gt;': '</em>',
+            '&lt;code&gt;': '<code>',
+            '&lt;/code&gt;': '</code>',
+            '&lt;br&gt;': '<br>'
+        };
+        
+        Object.keys(allowedTags).forEach(escaped => {
+            texto = texto.replace(new RegExp(escaped, 'g'), allowedTags[escaped]);
+        });
+        
+        return texto;
+    }
 
+    // Listener para o botão de enviar
     sendButton.addEventListener('click', enviarMensagem);
 
+    // Listener para tecla Enter no campo de input
     chatInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -124,25 +139,4 @@ document.addEventListener('DOMContentLoaded', function() {
         chatContainer.scrollTop = chatContainer.scrollHeight;
         return typingDiv;
     }
-});
-// Adicione esta função para limpar e recarregar o chat quando mudar de perfil
-function limparERecarregarChat() {
-    const chatContainer = document.getElementById('chat-container');
-    chatContainer.innerHTML = '';
-    carregarHistorico();
-}
-
-// Observe mudanças na URL para recarregar o chat
-window.addEventListener('popstate', function() {
-    limparERecarregarChat();
-});
-
-// Modifique os event listeners dos links para forçar recarregamento
-document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_fc').forEach(link => {
-    link.addEventListener('click', function(e) {
-        e.preventDefault();
-        history.pushState({}, '', this.href);
-        limparERecarregarChat();
-        window.location.href = this.href;
-    });
 });

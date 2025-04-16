@@ -2,18 +2,19 @@ from flask import Flask, render_template, request, jsonify
 import json
 import os
 from openai import OpenAI
-from google.analytics.data_v1beta import BetaAnalyticsDataClient
-from google.analytics.data_v1beta.types import (
-    RunReportRequest,
-    Dimension,
-    Metric,
-    DateRange,
-)
+
 
 app = Flask(__name__)
 
-DEEPSEEK_API_KEY =  os.getenv("DEEPSEEK_API_KEY")
-client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+GA_PROPERTY_ID = "358341825"
+
+# Configuração do DeepSeek
+DEEPSEEK_API_KEY = "sk-88c90c0c91c94912b276f19234eacc51"
+deepseek_client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+
+# Caminhos relativos
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JSON_DIR = os.path.join(BASE_DIR, 'data', 'json')
 
 # Configurações de arquivos - atualize para incluir os diferentes perfis
 HISTORICO_ARQUIVOS = {
@@ -38,19 +39,19 @@ BASE_CONHECIMENTO = {}
 RESUMO_RELATORIOS = {}
 
 # Carrega os dados iniciais
+# Função para carregar dados (unificada)
 def carregar_dados_iniciais(perfil="geral"):
-    global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
+    global BASE_CONHECIMENTO, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
     
-    # Define os arquivos corretos para o perfil
-    CONHECIMENTO_ARQUIVO = CONHECIMENTO_ARQUIVOS.get(perfil, CONHECIMENTO_ARQUIVOS["geral"])
-    HISTORICO_ARQUIVO = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS["geral"])
+    CONHECIMENTO_ARQUIVO = CONHECIMENTO_ARQUIVOS.get(perfil)
+    HISTORICO_ARQUIVO = HISTORICO_ARQUIVOS.get(perfil)
     
     try:
         with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
             BASE_CONHECIMENTO = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         BASE_CONHECIMENTO = {"conhecimento": []}
-    
+        
     try:
         with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
             RESUMO_RELATORIOS = json.load(f)
@@ -87,13 +88,7 @@ def carregar_dados_iniciais(perfil="suporte"):
         with open(CONHECIMENTO_ARQUIVO, "r", encoding="utf-8") as f:
             BASE_CONHECIMENTO = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        BASE_CONHECIMENTO = {"conhecimento": []}
-    
-    try:
-        with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
-            RESUMO_RELATORIOS = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        RESUMO_RELATORIOS = {}    
+        BASE_CONHECIMENTO = {"conhecimento": []}   
      
 def carregar_dados_iniciais(perfil="vendas"):
     global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
@@ -107,12 +102,6 @@ def carregar_dados_iniciais(perfil="vendas"):
             BASE_CONHECIMENTO = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         BASE_CONHECIMENTO = {"conhecimento": []}
-    
-    try:
-        with open(r"C:\Users\Comercial\Desktop\Programação\Python\programa\data\Resumo_dos_relatórios.json", "r", encoding="utf-8") as f:
-            RESUMO_RELATORIOS = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        RESUMO_RELATORIOS = {}  
         
 def carregar_dados_iniciais(perfil="financeiro"):
     global BASE_CONHECIMENTO, RESUMO_RELATORIOS, CONHECIMENTO_ARQUIVO, HISTORICO_ARQUIVO
@@ -189,6 +178,7 @@ def limpar_historico():
     except Exception as e:
         print(f"Erro ao limpar o histórico: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+    
 
 @app.route('/chat/historico')
 def obter_historico():
@@ -203,6 +193,18 @@ def carregar_historico() -> list:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
+
+@app.after_request
+def add_header(response):
+    """
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 def salvar_historico(historico: list) -> None:
     try:
@@ -234,8 +236,13 @@ def obter_dados_google_analytics():
 
 def gerar_resposta_bot(mensagens: list) -> str:
     mensagem_system = """Você é um assistente chamado Dip e trabalha para a empresa Diponto.
+                         Você tem 4 perfis diferentes: marketing, suporte, vendas e financeiro, respondas as perguntas do usuario de acordo com o perfil.
+                         No perfil de marketing, você deve responder perguntas relacionadas a marketing, campanhas e estratégias de vendas, não responda perguntas sobre suporte, vendas ou financeiro.
+                         No perfil de suporte, você deve responder perguntas relacionadas a suporte técnico e atendimento ao cliente, não responda perguntas sobre marketing, vendas ou financeiro.
+                         No perfil de vendas, você deve responder perguntas relacionadas a vendas, produtos e serviços, não responda perguntas sobre marketing, suporte ou financeiro.
+                         No perfil financeiro, você deve responder perguntas relacionadas a finanças, contabilidade e relatórios financeiros, não responda perguntas sobre marketing, suporte ou vendas.
                          Você deve responder perguntas e ajudar os usuários com informações relevantes.
-                         Você deve usar informações do arquivo de base de conhecimento.
+                         Você deve sempre usar informações do arquivo de base de conhecimento, se fazem uma pergunta que a resposta não esteja na sua base de conhecimento, diga que não tem a resposta ou peça para que o usuario troque para o perfil mais adequado com a pergunta.
                          Você tem acesso a dados do Google Analytics atualizados.
                          Você nunca deve responder perguntas pessoais ou fornecer informações que não sejam relevantes.
                          Dados recentes do Google Analytics serão fornecidos abaixo:"""
@@ -264,7 +271,5 @@ def gerar_resposta_bot(mensagens: list) -> str:
     return response.choices[0].message.content
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
-if __name__ == "__main__":
-    ft.app(target=main, view=ft.WEB_BROWSER)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)

@@ -1,10 +1,1 @@
-[
-    [
-        "user",
-        "como instalar uma dpsin?"
-    ],
-    [
-        "assistant",
-        "Para instalar um acionador DPSIN, siga os passos abaixo:\n\n### **Passo a Passo para Instalação do Acionador DPSIN Bivolt**  \n\n1. **Desligue a Energia**  \n   - Certifique-se de que o local está sem energia elétrica para evitar acidentes.  \n\n2. **Identifique os Fios**  \n   - O DPSIN possui três terminais:  \n     - **L (Fase)**: Conecte ao fio fase da rede elétrica (geralmente preto, vermelho ou marrom).  \n     - **N (Neutro)**: Conecte ao fio neutro (geralmente azul ou branco).  \n     - **Saída (Sirene)**: Conecte ao terminal positivo (+) da sirene.  \n\n3. **Conexão da Sirene**  \n   - O terminal negativo (-) da sirene deve ser conectado ao neutro (N) ou ao terra, dependendo do modelo.  \n\n4. **Fixação**  \n   - Instale o DPSIN em local protegido (evite umidade e calor excessivo).  \n\n5. **Teste**  \n   - Após a instalação, religue a energia e teste o acionamento da sirene.  \n\n### **Observações**  \n- Consulte o manual do produto para especificações técnicas.  \n- Utilize fiação adequada à corrente do equipamento.  \n- Em dúvida, consulte um eletricista qualificado.  \n\nPara mais detalhes, acesse o [manual do DPSIN](https://www.diponto.com.br/manuais) ou entre em contato com nosso suporte.  \n\n**Precisa de ajuda?**  \n📞 **Atendimento Diponto**: (XX) XXXX-XXXX  \n📧 **E-mail**: suporte@diponto.com.br"
-    ]
-]
+[]

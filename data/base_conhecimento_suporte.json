@@ -1,5 +1,6 @@
 {
 "conhecimento": [
+    {"pergunta": "o que fazer caso receba uma pergunta relacionada a outro perfil, como marketing, financeiro ou vendas?", "resposta": "Caso receba uma pergunta relacionada a outro perfil, como marketing, financeiro ou vendas, você deve responder que não é o perfil adequado para responder a pergunta e que o usuário deve entrar no perfil adequado"},
     {"pergunta": "a aplicativo Diponto Smart está disponivel para dispositivos IOS?", "resposta": "Não, o aplicativo Diponto Smart não está disponivel para IOS, apenas para Android"},
     {"pergunta": "Quais são as certificações a prova d'agua e seus significados?", "resposta": "As certificações a prova d'agua são: IP66, IP67 e IP68. O IP66 é resistente a poeira e jatos de água, o IP67 é resistente a poeira e submersão em água por até 30 minutos e o IP68 é resistente a poeira e submersão em água por tempo indeterminado."},	
     {"pergunta": "Que recomendação de produtos dar para escolas?", "resposta": "As escolas podem ter diferentes necessidas, mas sempre a recomendação devem ser os produtos da linha Wi-Fi"}, 
