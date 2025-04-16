@@ -4,7 +4,7 @@ import os
 from openai import OpenAI
 
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+app = Flask(__name__, template_folder='programa/templates/', static_folder='programa/static/')
 
 # Configuração com variáveis de ambiente
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
