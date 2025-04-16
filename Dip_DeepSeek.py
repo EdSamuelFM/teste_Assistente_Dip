@@ -4,9 +4,7 @@ import os
 from openai import OpenAI
 
 
-app = Flask(__name__)
-
-GA_PROPERTY_ID = "358341825"
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # Configuração do DeepSeek
 DEEPSEEK_API_KEY = "sk-88c90c0c91c94912b276f19234eacc51"
