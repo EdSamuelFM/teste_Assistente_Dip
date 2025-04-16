@@ -60,7 +60,15 @@ RESUMO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
 @app.route('/chat/historico')
 def obter_historico():
     try:
-        with open(HISTORICO_ARQUIVO, 'r', encoding='utf-8') as f:
+        # Verifica qual perfil está ativo (você precisará implementar essa lógica)
+        perfil = request.args.get('perfil', 'geral')
+        arquivo_historico = HISTORICO_ARQUIVOS.get(perfil, HISTORICO_ARQUIVOS['geral'])
+        
+        if not os.path.exists(arquivo_historico):
+            with open(arquivo_historico, 'w', encoding='utf-8') as f:
+                json.dump([], f)
+        
+        with open(arquivo_historico, 'r', encoding='utf-8') as f:
             historico = json.load(f)
         
         if not isinstance(historico, list):
@@ -70,7 +78,7 @@ def obter_historico():
     
     except Exception as e:
         print(f"Erro ao carregar histórico: {str(e)}")
-        return jsonify([])
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -203,5 +211,11 @@ def gerar_resposta_bot(mensagens: list) -> str:
     return response.choices[0].message.content
 
 if __name__ == '__main__':
+    # Garante que os arquivos existam
+    for arquivo in HISTORICO_ARQUIVOS.values():
+        if not os.path.exists(arquivo):
+            with open(arquivo, 'w', encoding='utf-8') as f:
+                json.dump([], f)
+    
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
