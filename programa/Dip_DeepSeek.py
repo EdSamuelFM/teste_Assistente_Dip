@@ -110,7 +110,13 @@ def limpar_historico():
     except Exception as e:
         print(f"Erro ao limpar o histórico: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
-    
+
+def carregar_historico() -> list:
+    try:
+        with open(HISTORICO_ARQUIVO, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
 
 @app.route('/chat/historico')
 def obter_historico():
