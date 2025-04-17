@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (path.includes('marketing')) perfil = 'marketing';
     else if (path.includes('suporte')) perfil = 'suporte';
     else if (path.includes('vendas')) perfil = 'vendas';
+    else if (path.includes('vendas')) perfil = 'vendas';    
     else if (path.includes('financeiro')) perfil = 'financeiro';
 
     const chatInput = document.getElementById('chat-input');
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.history.pushState({}, '', href);
             
             // Atualiza a classe 'active' nos links
-            document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_fc').forEach(link => {
+            document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, agente_dv, .agente_fc').forEach(link => {
                 link.classList.remove('active');
             });
             this.classList.add('active');
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Configura os listeners para os links de perfil
-    document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_fc').forEach(link => {
+    document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, agente_dv, .agente_fc').forEach(link => {
         link.addEventListener('click', handleProfileChange);
     });
 
