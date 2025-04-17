@@ -55,7 +55,7 @@ if not os.path.exists(resumo_path):
 
 # Configuração do cliente DeepSeek
 deepseek_client = OpenAI(
-    api_key=os.getenv("DEEPSEEK_API_KEY","),  # Usa variável de ambiente
+    api_key=os.getenv("DEEPSEEK_API_KEY"),  # Usa variável de ambiente
     base_url="https://api.deepseek.com/v1",
     timeout=30
 )
