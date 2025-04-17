@@ -1,9 +1,9 @@
 import os
+import time
 import json
 import traceback
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from openai import OpenAI
-import time
 
 app = Flask(__name__, 
             template_folder='templates',
@@ -54,11 +54,11 @@ if not os.path.exists(resumo_path):
     with open(resumo_path, 'w', encoding='utf-8') as f:
         json.dump({}, f)
 
-# Configuração do cliente DeepSeek
+# Configuração segura do cliente DeepSeek
 deepseek_client = OpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),  # Usa variável de ambiente
     base_url="https://api.deepseek.com/v1",
-    timeout=30
+    timeout=20
 )
 
 # Rotas principais
@@ -81,6 +81,11 @@ def financeiro():
 @app.route('/vendas')
 def vendas():
     return render_template('vendas.html')
+
+# Rota para evitar erro 404 do Flutter
+@app.route('/flutter_service_worker.js')
+def flutter_sw():
+    return '', 204
 
 # Rotas de API
 @app.route('/chat/historico')
@@ -112,12 +117,6 @@ def chat():
         arquivo_historico = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'].get(perfil, ARQUIVOS_JSON['historico']['geral']))
         arquivo_base = os.path.join(DATA_DIR, ARQUIVOS_JSON['base'].get(perfil, ARQUIVOS_JSON['base']['geral']))
         resumo_path = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
-        
-        # Garante que os arquivos existem
-        for arquivo in [arquivo_historico, arquivo_base, resumo_path]:
-            if not os.path.exists(arquivo):
-                with open(arquivo, 'w', encoding='utf-8') as f:
-                    json.dump({"conhecimento": []} if "base" in arquivo else [], f)
         
         # Carrega dados
         with open(arquivo_historico, 'r', encoding='utf-8') as f:
@@ -151,7 +150,6 @@ def chat():
     except Exception as e:
         print(f"ERRO NO CHAT: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
-                
 
 @app.route('/chat/limpar_historico', methods=['POST'])
 def limpar_historico():
@@ -171,10 +169,10 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
     try:
         # Configura a mensagem do sistema baseada no perfil
         perfis = {
-            'marketing': "Você é um assistente especializado em marketing da empresa Diponto. Responda apenas perguntas sobre marketing, campanhas e estratégias.",
-            'suporte': "Você é um assistente especializado em suporte técnico da empresa Diponto. Responda apenas perguntas técnicas e de suporte.",
-            'vendas': "Você é um assistente especializado em vendas da empresa Diponto. Responda apenas perguntas sobre produtos, serviços e vendas.",
-            'financeiro': "Você é um assistente especializado em finanças da empresa Diponto. Responda apenas perguntas sobre relatórios financeiros e contabilidade.",
+            'marketing': "Você é um assistente especializado em marketing da empresa Diponto.",
+            'suporte': "Você é um assistente especializado em suporte técnico da empresa Diponto.",
+            'vendas': "Você é um assistente especializado em vendas da empresa Diponto.",
+            'financeiro': "Você é um assistente especializado em finanças da empresa Diponto.",
             'geral': "Você é o assistente geral da empresa Diponto."
         }
         
@@ -206,7 +204,8 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
             model="deepseek-chat",
             messages=mensagens_api,
             stream=False,
-            temperature=0.7
+            temperature=0.7,
+            max_tokens=500
         )
         
         print(f"Resposta da DeepSeek: {response}")
@@ -224,51 +223,12 @@ def teste_api():
         response = deepseek_client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": "Responda com 'OK' se estiver funcionando"}],
-            stream=False
+            max_tokens=10
         )
         return jsonify({"status": "success", "response": response.choices[0].message.content})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# Rota para resetar arquivos (apenas para desenvolvimento)
-@app.route('/reset-arquivos', methods=['POST'])
-def reset_arquivos():
-    try:
-        for perfil in ARQUIVOS_JSON['historico']:
-            path = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'][perfil])
-            with open(path, 'w', encoding='utf-8') as f:
-                json.dump([], f)
-        
-        for perfil in ARQUIVOS_JSON['base']:
-            path = os.path.join(DATA_DIR, ARQUIVOS_JSON['base'][perfil])
-            with open(path, 'w', encoding='utf-8') as f:
-                json.dump({"conhecimento": []}, f)
-        
-        with open(os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo']), 'w', encoding='utf-8') as f:
-            json.dump({}, f)
-        
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.before_request
-def log_request():
-    request.start_time = time.time()
-
-@app.after_request
-def log_response(response):
-    duration = time.time() - request.start_time
-    app.logger.info(f"Request to {request.path} took {duration:.2f}s")
-    return response
-
-@app.route('/flutter_service_worker.js')
-def flutter_service_worker():
-    return app.send_static_file('js/flutter_service_worker.js')  # Se você tiver o arquivo
-    # Ou retorne vazio se não for necessário
-    return '', 204
-            def flutter_sw():
-    return send_from_directory(app.static_folder, 'flutter_service_worker.js')
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-   app.run(host='0.0.0.0', port=port, threaded=True)
+    app.run(host='0.0.0.0', port=port, threaded=True)
