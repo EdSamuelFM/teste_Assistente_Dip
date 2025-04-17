@@ -4,14 +4,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatContainer = document.getElementById('chat-container');
     const clearHistoryButton = document.getElementById('clear-history-button');
 
-    // Função para lidar com a troca de perfil
-   function handleProfileChange(e) {
+function handleProfileChange(e) {
     e.preventDefault();
-    const perfil = this.getAttribute('data-perfil');
+    const href = this.getAttribute('href');
+    const perfil = href.replace('/', ''); // Extrai o perfil da URL
     carregarHistorico(perfil);
-    window.history.pushState({}, '', this.href);
+    window.history.pushState({}, '', href);
+    // Atualiza a classe 'active' nos links
+    document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_fc').forEach(link => {
+        link.classList.remove('active');
+    });
+    this.classList.add('active');
 }
-
  // Obter o perfil atual baseado na URL
     const path = window.location.pathname;
     let perfil = 'geral'; // padrão
