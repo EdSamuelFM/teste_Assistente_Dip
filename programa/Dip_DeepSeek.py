@@ -1,18 +1,12 @@
 import os
 import json
+import traceback
 from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
 
 app = Flask(__name__, 
             template_folder='templates',
             static_folder='static')
-
-
-# Configuração do cliente DeepSeek
-deepseek_client = OpenAI(
-    api_key="DEEPSEEK_API_KEY",  # Substitua pela sua chave real
-    base_url="https://api.deepseek.com/v1"  # URL da API DeepSeek
-)
 
 # Configurações de caminhos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +16,7 @@ DATA_DIR = os.path.join(BASE_DIR, 'static', 'json')
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
-# Lista de todos os seus arquivos JSON
+# Lista de arquivos JSON
 ARQUIVOS_JSON = {
     'resumo': 'Resumo_dos_relatórios.json',
     'base': {
@@ -35,13 +29,13 @@ ARQUIVOS_JSON = {
     'historico': {
         'geral': 'historico_conversas.json',
         'financeiro': 'historico_conversas_financeiro.json',
-        'marketing': '_conversas_marketing.json',
+        'marketing': 'historico_conversas_marketing.json',
         'suporte': 'historico_conversas_suporte.json',
         'vendas': 'historico_conversas_vendas.json'
     }
 }
 
-# Cria arquivos se não existirem
+# Inicializa arquivos se não existirem
 for perfil, arquivo in ARQUIVOS_JSON['historico'].items():
     path = os.path.join(DATA_DIR, arquivo)
     if not os.path.exists(path):
@@ -59,11 +53,14 @@ if not os.path.exists(resumo_path):
     with open(resumo_path, 'w', encoding='utf-8') as f:
         json.dump({}, f)
 
-# Variável global para controle
-HISTORICO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico']['geral'])
-BASE_CONHECIMENTO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['base']['geral'])
-RESUMO_ARQUIVO = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
+# Configuração do cliente DeepSeek
+deepseek_client = OpenAI(
+    api_key="DEEPSEEK_API_KEY",  # SUBSTITUA POR SUA CHAVE REAL
+    base_url="https://api.deepseek.com/v1",
+    timeout=30
+)
 
+# Rotas principais
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -84,10 +81,10 @@ def financeiro():
 def vendas():
     return render_template('vendas.html')
 
+# Rotas de API
 @app.route('/chat/historico')
 def obter_historico():
     try:
-        # Verifica qual perfil está ativo
         perfil = request.args.get('perfil', 'geral')
         arquivo_historico = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'].get(perfil, ARQUIVOS_JSON['historico']['geral']))
         
@@ -98,13 +95,10 @@ def obter_historico():
         with open(arquivo_historico, 'r', encoding='utf-8') as f:
             historico = json.load(f)
         
-        if not isinstance(historico, list):
-            historico = []
-            
         return jsonify([{"role": role, "content": content} for role, content in historico])
     
     except Exception as e:
-        print(f"Erro ao carregar histórico: {str(e)}")
+        print(f"Erro ao carregar histórico: {traceback.format_exc()}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/chat', methods=['POST'])
@@ -113,26 +107,31 @@ def chat():
         message = request.form['message']
         perfil = request.form.get('perfil', 'geral')
         
-        # Carrega histórico do perfil correto
+        # Carrega arquivos
         arquivo_historico = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'].get(perfil, ARQUIVOS_JSON['historico']['geral']))
         arquivo_base = os.path.join(DATA_DIR, ARQUIVOS_JSON['base'].get(perfil, ARQUIVOS_JSON['base']['geral']))
+        resumo_path = os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo'])
         
-        # Carrega histórico atual
+        # Garante que os arquivos existem
+        for arquivo in [arquivo_historico, arquivo_base, resumo_path]:
+            if not os.path.exists(arquivo):
+                with open(arquivo, 'w', encoding='utf-8') as f:
+                    json.dump({"conhecimento": []} if "base" in arquivo else [], f)
+        
+        # Carrega dados
         with open(arquivo_historico, 'r', encoding='utf-8') as f:
             historico = json.load(f)
         
-        # Carrega base de conhecimento
         with open(arquivo_base, 'r', encoding='utf-8') as f:
             base_conhecimento = json.load(f)
         
-        # Carrega resumo dos relatórios
-        with open(RESUMO_ARQUIVO, 'r', encoding='utf-8') as f:
+        with open(resumo_path, 'r', encoding='utf-8') as f:
             resumo_relatorios = json.load(f)
         
-        # Adiciona nova mensagem ao histórico
+        # Adiciona mensagem ao histórico
         historico.append(("user", message))
         
-        # Gera resposta usando a DeepSeek
+        # Gera resposta
         resposta = gerar_resposta_bot(
             mensagens=historico,
             base_conhecimento=base_conhecimento,
@@ -140,131 +139,116 @@ def chat():
             perfil=perfil
         )
         
-        # Adiciona resposta ao histórico
+        # Atualiza histórico
         historico.append(("assistant", resposta))
         
-        # Salva histórico atualizado
         with open(arquivo_historico, 'w', encoding='utf-8') as f:
             json.dump(historico, f, ensure_ascii=False, indent=4)
         
         return jsonify({"response": resposta})
     
     except Exception as e:
-        print(f"Erro no chat: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-    
-    except Exception as e:
-        print(f"Erro no chat: {str(e)}")
+        print(f"ERRO NO CHAT: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/chat/limpar_historico', methods=['POST'])
 def limpar_historico():
     try:
-        # Limpa o arquivo do histórico
-        with open(HISTORICO_ARQUIVO, "w", encoding="utf-8") as f:
+        perfil = request.json.get('perfil', 'geral')
+        arquivo_historico = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'].get(perfil, ARQUIVOS_JSON['historico']['geral']))
+        
+        with open(arquivo_historico, "w", encoding="utf-8") as f:
             json.dump([], f, indent=4, ensure_ascii=False)
         return jsonify({"status": "success"}), 200
     except Exception as e:
-        print(f"Erro ao limpar o histórico: {e}")
+        print(f"Erro ao limpar o histórico: {traceback.format_exc()}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.after_request
-def add_header(response):
-    """
-    Add headers to both force latest IE rendering engine or Chrome Frame,
-    and also to cache the rendered page for 10 minutes.
-    """
-    response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    return response
-
-def salvar_historico(historico: list) -> None:
-    try:
-        with open(HISTORICO_ARQUIVO, "w", encoding="utf-8") as f:
-            json.dump(historico, f, indent=4, ensure_ascii=False)
-    except Exception as e:
-        print(f"Erro ao salvar o histórico: {e}")
-
-def obter_dados_google_analytics():
-    try:
-        request = RunReportRequest(
-            property=f"properties/{GA_PROPERTY_ID}",
-            dimensions=[Dimension(name="city")],
-            metrics=[Metric(name="activeUsers")],
-            date_ranges=[DateRange(start_date="7daysAgo", end_date="today")]
-        )
-        response = ga_client.run_report(request)
-        
-        dados_formatados = []
-        for row in response.rows:
-            cidade = row.dimension_values[0].value
-            usuarios = row.metric_values[0].value
-            dados_formatados.append(f"{cidade}: {usuarios} usuários ativos")
-        
-        return "\n".join(dados_formatados)
-    except Exception as e:
-        print(f"Erro ao obter dados do Google Analytics: {e}")
-        return None
+# Funções auxiliares
 def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatorios: dict, perfil: str) -> str:
-    # Configura a mensagem do sistema baseada no perfil
-    perfis = {
-        'marketing': "Você é um assistente especializado em marketing da empresa Diponto.",
-        'suporte': "Você é um assistente especializado em suporte técnico da empresa Diponto.",
-        'vendas': "Você é um assistente especializado em vendas da empresa Diponto.",
-        'financeiro': "Você é um assistente especializado em finanças da empresa Diponto.",
-        'geral': "Você é o assistente geral da empresa Diponto."
-    }
-
-    mensagem_system = """Você é um assistente chamado Dip e trabalha para a empresa Diponto.
-                         Você tem 4 perfis diferentes: marketing, suporte, vendas e financeiro, respondas as perguntas do usuario de acordo com o perfil.
-                         No perfil de marketing, você deve responder perguntas relacionadas a marketing, campanhas e estratégias de vendas, não responda perguntas sobre suporte, vendas ou financeiro.
-                         No perfil de suporte, você deve responder perguntas relacionadas a suporte técnico e atendimento ao cliente, não responda perguntas sobre marketing, vendas ou financeiro.
-                         No perfil de vendas, você deve responder perguntas relacionadas a vendas, produtos e serviços, não responda perguntas sobre marketing, suporte ou financeiro.
-                         No perfil financeiro, você deve responder perguntas relacionadas a finanças, contabilidade e relatórios financeiros, não responda perguntas sobre marketing, suporte ou vendas.
-                         Você deve responder perguntas e ajudar os usuários com informações relevantes.
-                         Você deve sempre usar informações do arquivo de base de conhecimento, se fazem uma pergunta que a resposta não esteja na sua base de conhecimento, diga que não tem a resposta ou peça para que o usuario troque para o perfil mais adequado com a pergunta.
-                         Você tem acesso a dados do Google Analytics atualizados.
-                         Você nunca deve responder perguntas pessoais ou fornecer informações que não sejam relevantes.
-                         Dados recentes do Google Analytics serão fornecidos abaixo:"""
-    # Adiciona base de conhecimento formatada
-    if base_conhecimento.get("conhecimento"):
-        mensagem_system += "\n\nBase de Conhecimento:\n" + \
-            "\n".join([f"Pergunta: {item['pergunta']}\nResposta: {item['resposta']}\n" 
-                      for item in base_conhecimento["conhecimento"] if item.get('pergunta')])
-    
-    # Adiciona resumo de relatórios
-    if resumo_relatorios:
-        mensagem_system += "\n\nResumo de Relatórios:\n" + json.dumps(resumo_relatorios, ensure_ascii=False, indent=2)
-    
-    # Prepara mensagens para a API
-    mensagens_api = [{"role": "system", "content": mensagem_system}]
-    
-    # Adiciona histórico de conversa
-    for role, content in mensagens:
-        mensagens_api.append({"role": "assistant" if role == "assistant" else "user", "content": content})
-    
     try:
-        # Chama a API da DeepSeek
+        # Configura a mensagem do sistema baseada no perfil
+        perfis = {
+            'marketing': "Você é um assistente especializado em marketing da empresa Diponto. Responda apenas perguntas sobre marketing, campanhas e estratégias.",
+            'suporte': "Você é um assistente especializado em suporte técnico da empresa Diponto. Responda apenas perguntas técnicas e de suporte.",
+            'vendas': "Você é um assistente especializado em vendas da empresa Diponto. Responda apenas perguntas sobre produtos, serviços e vendas.",
+            'financeiro': "Você é um assistente especializado em finanças da empresa Diponto. Responda apenas perguntas sobre relatórios financeiros e contabilidade.",
+            'geral': "Você é o assistente geral da empresa Diponto."
+        }
+        
+        mensagem_system = f"""{perfis.get(perfil, perfis['geral'])}
+        Use as informações da base de conhecimento fornecida.
+        Se não souber a resposta, diga que não tem a informação.
+        Dados relevantes serão fornecidos abaixo:"""
+        
+        # Adiciona base de conhecimento formatada
+        if base_conhecimento.get("conhecimento"):
+            mensagem_system += "\n\nBase de Conhecimento:\n" + \
+                "\n".join([f"Pergunta: {item.get('pergunta', '')}\nResposta: {item.get('resposta', '')}\n" 
+                          for item in base_conhecimento["conhecimento"] if item.get('pergunta')])
+        
+        # Adiciona resumo de relatórios
+        if resumo_relatorios:
+            mensagem_system += "\n\nResumo de Relatórios:\n" + json.dumps(resumo_relatorios, ensure_ascii=False, indent=2)
+        
+        # Prepara mensagens para a API
+        mensagens_api = [{"role": "system", "content": mensagem_system}]
+        
+        # Adiciona histórico de conversa
+        for role, content in mensagens:
+            mensagens_api.append({"role": "assistant" if role == "assistant" else "user", "content": content})
+        
+        print(f"Enviando para DeepSeek: {json.dumps(mensagens_api, indent=2)}")
+        
         response = deepseek_client.chat.completions.create(
             model="deepseek-chat",
             messages=mensagens_api,
-            stream=False
+            stream=False,
+            temperature=0.7
         )
+        
+        print(f"Resposta da DeepSeek: {response}")
         
         return response.choices[0].message.content
     
     except Exception as e:
-        print(f"Erro ao chamar API DeepSeek: {str(e)}")
+        print(f"ERRO NA GERAÇÃO DE RESPOSTA: {traceback.format_exc()}")
         return "Desculpe, ocorreu um erro ao processar sua solicitação."
 
-if __name__ == '__main__':
-    # Garante que os arquivos existam
-    for arquivo in HISTORICO_ARQUIVOS.values():
-        if not os.path.exists(arquivo):
-            with open(arquivo, 'w', encoding='utf-8') as f:
+# Rota de teste da API
+@app.route('/teste-api', methods=['GET'])
+def teste_api():
+    try:
+        response = deepseek_client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": "Responda com 'OK' se estiver funcionando"}],
+            stream=False
+        )
+        return jsonify({"status": "success", "response": response.choices[0].message.content})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# Rota para resetar arquivos (apenas para desenvolvimento)
+@app.route('/reset-arquivos', methods=['POST'])
+def reset_arquivos():
+    try:
+        for perfil in ARQUIVOS_JSON['historico']:
+            path = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'][perfil])
+            with open(path, 'w', encoding='utf-8') as f:
                 json.dump([], f)
-    
+        
+        for perfil in ARQUIVOS_JSON['base']:
+            path = os.path.join(DATA_DIR, ARQUIVOS_JSON['base'][perfil])
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump({"conhecimento": []}, f)
+        
+        with open(os.path.join(DATA_DIR, ARQUIVOS_JSON['resumo']), 'w', encoding='utf-8') as f:
+            json.dump({}, f)
+        
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
