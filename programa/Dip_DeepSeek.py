@@ -208,9 +208,12 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
              timeout=30.0
         )
         
-        print(f"Resposta da DeepSeek: {response}")
-        
-        return response.choices[0].message.content
+        complete_response = ""
+for chunk in response:
+    if chunk.choices[0].delta.content:
+        complete_response += chunk.choices[0].delta.content
+
+return complete_response
     
     except Exception as e:
         print(f"ERRO NA GERAÇÃO DE RESPOSTA: {traceback.format_exc()}")
