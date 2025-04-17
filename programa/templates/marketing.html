@@ -22,10 +22,10 @@
             </label>
         </div>
         <div class="agentes">
-           <a class="agente_mk" href="/marketing" data-perfil="marketing">Marketing</a>
-            <a class="agente_sp" href="/suporte" data-perfil="suporte">Suporte</a>
-          <a class="agente_vd" href="/suporte" data-perfil="vendas">Vendas</a>
-            <a class="agente_fc" href="/suporte" data-perfil="financeiro">Financeiro</a>
+    <a class="agente_mk {% if request.path == '/marketing' %}active{% endif %}" href="/marketing">Marketing</a>
+    <a class="agente_sp {% if request.path == '/suporte' %}active{% endif %}" href="/suporte">Suporte</a>
+    <a class="agente_vd {% if request.path == '/vendas' %}active{% endif %}" href="/vendas">Vendas</a>
+    <a class="agente_fc {% if request.path == '/financeiro' %}active{% endif %}" href="/financeiro">Financeiro</a>
         </div>
         <div class="controle">
             <button id="clear-history-button" class="limpa">Limpar Histórico</button>
