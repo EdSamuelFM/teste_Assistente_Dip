@@ -205,7 +205,7 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
              messages=mensagens_api,
              stream=False,
              temperature=0.7,
-             max_tokens=500
+             max_tokens=500,
               timeout=30.0
          )
  
