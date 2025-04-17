@@ -203,7 +203,7 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
         response = deepseek_client.chat.completions.create(
             model="deepseek-chat",
             messages=mensagens_api,
-            stream=true,
+            stream=True,
             temperature=0.7,
              timeout=30.0
         )
