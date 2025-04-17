@@ -7,6 +7,13 @@ app = Flask(__name__,
             template_folder='templates',
             static_folder='static')
 
+
+# Configuração do cliente DeepSeek
+deepseek_client = OpenAI(
+    api_key="DEEPSEEK_API_KEY",  # Substitua pela sua chave real
+    base_url="https://api.deepseek.com/v1"  # URL da API DeepSeek
+)
+
 # Configurações de caminhos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'static', 'json')
@@ -108,25 +115,43 @@ def chat():
         
         # Carrega histórico do perfil correto
         arquivo_historico = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'].get(perfil, ARQUIVOS_JSON['historico']['geral']))
-        
-   
+        arquivo_base = os.path.join(DATA_DIR, ARQUIVOS_JSON['base'].get(perfil, ARQUIVOS_JSON['base']['geral']))
         
         # Carrega histórico atual
-        with open(HISTORICO_ARQUIVO, 'r', encoding='utf-8') as f:
+        with open(arquivo_historico, 'r', encoding='utf-8') as f:
             historico = json.load(f)
         
-        # Adiciona nova mensagem
+        # Carrega base de conhecimento
+        with open(arquivo_base, 'r', encoding='utf-8') as f:
+            base_conhecimento = json.load(f)
+        
+        # Carrega resumo dos relatórios
+        with open(RESUMO_ARQUIVO, 'r', encoding='utf-8') as f:
+            resumo_relatorios = json.load(f)
+        
+        # Adiciona nova mensagem ao histórico
         historico.append(("user", message))
         
-        # Gera resposta (implemente sua lógica com OpenAI aqui)
-        resposta = "Esta é uma resposta de exemplo"
+        # Gera resposta usando a DeepSeek
+        resposta = gerar_resposta_bot(
+            mensagens=historico,
+            base_conhecimento=base_conhecimento,
+            resumo_relatorios=resumo_relatorios,
+            perfil=perfil
+        )
+        
+        # Adiciona resposta ao histórico
         historico.append(("assistant", resposta))
         
         # Salva histórico atualizado
-        with open(HISTORICO_ARQUIVO, 'w', encoding='utf-8') as f:
+        with open(arquivo_historico, 'w', encoding='utf-8') as f:
             json.dump(historico, f, ensure_ascii=False, indent=4)
         
         return jsonify({"response": resposta})
+    
+    except Exception as e:
+        print(f"Erro no chat: {str(e)}")
+        return jsonify({"error": str(e)}), 500
     
     except Exception as e:
         print(f"Erro no chat: {str(e)}")
@@ -182,8 +207,16 @@ def obter_dados_google_analytics():
     except Exception as e:
         print(f"Erro ao obter dados do Google Analytics: {e}")
         return None
+def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatorios: dict, perfil: str) -> str:
+    # Configura a mensagem do sistema baseada no perfil
+    perfis = {
+        'marketing': "Você é um assistente especializado em marketing da empresa Diponto.",
+        'suporte': "Você é um assistente especializado em suporte técnico da empresa Diponto.",
+        'vendas': "Você é um assistente especializado em vendas da empresa Diponto.",
+        'financeiro': "Você é um assistente especializado em finanças da empresa Diponto.",
+        'geral': "Você é o assistente geral da empresa Diponto."
+    }
 
-def gerar_resposta_bot(mensagens: list) -> str:
     mensagem_system = """Você é um assistente chamado Dip e trabalha para a empresa Diponto.
                          Você tem 4 perfis diferentes: marketing, suporte, vendas e financeiro, respondas as perguntas do usuario de acordo com o perfil.
                          No perfil de marketing, você deve responder perguntas relacionadas a marketing, campanhas e estratégias de vendas, não responda perguntas sobre suporte, vendas ou financeiro.
@@ -195,29 +228,36 @@ def gerar_resposta_bot(mensagens: list) -> str:
                          Você tem acesso a dados do Google Analytics atualizados.
                          Você nunca deve responder perguntas pessoais ou fornecer informações que não sejam relevantes.
                          Dados recentes do Google Analytics serão fornecidos abaixo:"""
-    dados_ga = obter_dados_google_analytics()
-    if dados_ga:
-        mensagem_system += f"\n{dados_ga}"
+    # Adiciona base de conhecimento formatada
+    if base_conhecimento.get("conhecimento"):
+        mensagem_system += "\n\nBase de Conhecimento:\n" + \
+            "\n".join([f"Pergunta: {item['pergunta']}\nResposta: {item['resposta']}\n" 
+                      for item in base_conhecimento["conhecimento"] if item.get('pergunta')])
     
-    mensagens_modelo = [{"role": "system", "content": mensagem_system}]
-    mensagens_modelo += [{"role": role, "content": content} for role, content in mensagens]
-
-    # Adicionar base de conhecimento
-    for item in BASE_CONHECIMENTO.get("conhecimento", []):
-        if "pergunta" in item and "resposta" in item:
-            mensagens_modelo.append({"role": "system", "content": f"Pergunta: {item['pergunta']} Resposta: {item['resposta']}"})
+    # Adiciona resumo de relatórios
+    if resumo_relatorios:
+        mensagem_system += "\n\nResumo de Relatórios:\n" + json.dumps(resumo_relatorios, ensure_ascii=False, indent=2)
     
-    # Adicionar dados do Resumo_dos_relatórios.json
-    if RESUMO_RELATORIOS:
-        mensagens_modelo.append({"role": "system", "content": f"Dados do Resumo dos Relatórios: {json.dumps(RESUMO_RELATORIOS, ensure_ascii=False)}"})
-
-    response = deepseek_client.chat.completions.create(
-        model="deepseek-chat", 
-        messages=mensagens_modelo, 
-        stream=False
-    )
-
-    return response.choices[0].message.content
+    # Prepara mensagens para a API
+    mensagens_api = [{"role": "system", "content": mensagem_system}]
+    
+    # Adiciona histórico de conversa
+    for role, content in mensagens:
+        mensagens_api.append({"role": "assistant" if role == "assistant" else "user", "content": content})
+    
+    try:
+        # Chama a API da DeepSeek
+        response = deepseek_client.chat.completions.create(
+            model="deepseek-chat",
+            messages=mensagens_api,
+            stream=False
+        )
+        
+        return response.choices[0].message.content
+    
+    except Exception as e:
+        print(f"Erro ao chamar API DeepSeek: {str(e)}")
+        return "Desculpe, ocorreu um erro ao processar sua solicitação."
 
 if __name__ == '__main__':
     # Garante que os arquivos existam
