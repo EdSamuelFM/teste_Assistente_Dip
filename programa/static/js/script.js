@@ -157,44 +157,19 @@ function handleProfileChange(e) {
     });
 
     async function enviarMensagem() {
-        const message = chatInput.value.trim();
-        if (!message) return;
+    const message = chatInput.value.trim();
+    if (!message) return;
 
-        addMessage('user', message);
-        chatInput.value = '';
+    addMessage('user', message);
+    chatInput.value = '';
 
-        const typingDiv = addTypingIndicator();
+    const typingDiv = addTypingIndicator();
 
-        try {
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `message=${encodeURIComponent(message)}`
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro no servidor');
-            }
-
-            const data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
-            if (!data.response) {
-                throw new Error('Resposta inválida do servidor');
-            }
-
-            typingDiv.remove();
-            addMessage('bot', data.response);
-            
-        } catch (error) {
-            console.error('Erro:', error);
-            typingDiv.remove();
-            addMessage('bot', `Desculpe, ocorreu um erro: ${error.message}`);
-        }
-    }
-});
+    try {
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `message=${encodeURIComponent(message)}&perfil=${perfil}`
+        });
