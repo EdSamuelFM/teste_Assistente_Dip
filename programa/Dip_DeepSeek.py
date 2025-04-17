@@ -205,7 +205,7 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
             messages=mensagens_api,
             stream=False,
             temperature=0.7,
-            timeout=30.0
+            timeout=300.0
         )
         
         print(f"Resposta da DeepSeek: {response}")
