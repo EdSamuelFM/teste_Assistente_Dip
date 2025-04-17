@@ -208,16 +208,16 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
              timeout=30.0
         )
         
-        complete_response = ""
-for chunk in response:
-    if chunk.choices[0].delta.content:
-        complete_response += chunk.choices[0].delta.content
-
-return complete_response
+ complete_response = ""
+    for chunk in response:
+        if chunk.choices[0].delta and chunk.choices[0].delta.content:
+            complete_response += chunk.choices[0].delta.content
     
-    except Exception as e:
-        print(f"ERRO NA GERAÇÃO DE RESPOSTA: {traceback.format_exc()}")
-        return "Desculpe, ocorreu um erro ao processar sua solicitação."
+    return complete_response
+
+except Exception as e:
+    print(f"Erro ao processar stream: {str(e)}")
+    return "Desculpe, ocorreu um erro ao processar sua solicitação."
 
 # Rota de teste da API
 @app.route('/teste-api', methods=['GET'])
