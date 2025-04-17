@@ -3,6 +3,7 @@ import json
 import traceback
 from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
+import time
 
 app = Flask(__name__, 
             template_folder='templates',
@@ -150,6 +151,7 @@ def chat():
     except Exception as e:
         print(f"ERRO NO CHAT: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
+                
 
 @app.route('/chat/limpar_historico', methods=['POST'])
 def limpar_historico():
@@ -249,6 +251,24 @@ def reset_arquivos():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.before_request
+def log_request():
+    request.start_time = time.time()
+
+@app.after_request
+def log_response(response):
+    duration = time.time() - request.start_time
+    app.logger.info(f"Request to {request.path} took {duration:.2f}s")
+    return response
+
+@app.route('/flutter_service_worker.js')
+def flutter_service_worker():
+    return app.send_static_file('js/flutter_service_worker.js')  # Se você tiver o arquivo
+    # Ou retorne vazio se não for necessário
+    return '', 204
+            def flutter_sw():
+    return send_from_directory(app.static_folder, 'flutter_service_worker.js')
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+   app.run(host='0.0.0.0', port=port, threaded=True)
