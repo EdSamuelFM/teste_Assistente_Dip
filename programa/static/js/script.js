@@ -12,6 +12,17 @@ document.addEventListener('DOMContentLoaded', function() {
     window.history.pushState({}, '', this.href);
 }
 
+ // Obter o perfil atual baseado na URL
+    const path = window.location.pathname;
+    let perfil = 'geral'; // padrão
+    
+    if (path.includes('marketing')) perfil = 'marketing';
+    else if (path.includes('suporte')) perfil = 'suporte';
+    else if (path.includes('vendas')) perfil = 'vendas';
+    else if (path.includes('financeiro')) perfil = 'financeiro';
+    
+    
+    
     // Configura os listeners para os links de perfil
     document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_fc').forEach(link => {
         link.addEventListener('click', handleProfileChange);
