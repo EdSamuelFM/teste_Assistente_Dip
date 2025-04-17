@@ -173,3 +173,5 @@ function handleProfileChange(e) {
             },
             body: `message=${encodeURIComponent(message)}&perfil=${perfil}`
         });
+    };
+};
