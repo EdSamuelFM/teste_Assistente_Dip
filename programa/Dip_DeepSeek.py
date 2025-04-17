@@ -104,6 +104,12 @@ def obter_historico():
 def chat():
     try:
         message = request.form['message']
+        perfil = request.form.get('perfil', 'geral')
+        
+        # Carrega histórico do perfil correto
+        arquivo_historico = os.path.join(DATA_DIR, ARQUIVOS_JSON['historico'].get(perfil, ARQUIVOS_JSON['historico']['geral']))
+        
+   
         
         # Carrega histórico atual
         with open(HISTORICO_ARQUIVO, 'r', encoding='utf-8') as f:
