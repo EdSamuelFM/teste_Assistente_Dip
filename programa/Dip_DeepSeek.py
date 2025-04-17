@@ -208,9 +208,13 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
              timeout=30.0
         )
 
-except Exception as e:
-    print(f"Erro ao processar stream: {str(e)}")
-    return "Desculpe, ocorreu um erro ao processar sua solicitação."
+ print(f"Resposta da DeepSeek: {response}")
+         
+         return response.choices[0].message.content
+ 
+     except Exception as e:
+         print(f"ERRO NA GERAÇÃO DE RESPOSTA: {traceback.format_exc()}")
+         return "Desculpe, ocorreu um erro ao processar sua solicitação."
 
 # Rota de teste da API
 @app.route('/teste-api', methods=['GET'])
