@@ -203,17 +203,10 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
         response = deepseek_client.chat.completions.create(
             model="deepseek-chat",
             messages=mensagens_api,
-            stream=True,
+            stream=False,
             temperature=0.7,
              timeout=30.0
         )
-        
- complete_response = ""
-    for chunk in response:
-        if chunk.choices[0].delta and chunk.choices[0].delta.content:
-            complete_response += chunk.choices[0].delta.content
-    
-    return complete_response
 
 except Exception as e:
     print(f"Erro ao processar stream: {str(e)}")
