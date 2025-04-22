@@ -25,14 +25,16 @@ ARQUIVOS_JSON = {
         'financeiro': 'base_conhecimento_financeiro.json',
         'marketing': 'base_conhecimento_marketing.json',
         'suporte': 'base_conhecimento_suporte.json',
-        'vendas': 'base_conhecimento_vendas.json'
+        'vendas': 'base_conhecimento_vendas.json',
+        'dev': 'base_conheciemnto_dev.json'    
     },
     'historico': {
         'geral': 'historico_conversas.json',
         'financeiro': 'historico_conversas_financeiro.json',
         'marketing': 'historico_conversas_marketing.json',
         'suporte': 'historico_conversas_suporte.json',
-        'vendas': 'historico_conversas_vendas.json'
+        'vendas': 'historico_conversas_vendas.json',
+        'dev': 'historico_conversas.dev.json'
     }
 }
 
@@ -178,6 +180,7 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
             'vendas': "Você é um assistente especializado em vendas da empresa Diponto.",
             'financeiro': "Você é um assistente especializado em finanças da empresa Diponto.",
             'geral': "Você é o assistente geral da empresa Diponto."
+            'dev': "Você é um assistente especializado em desenvolvimento de landing pagesdos produtos Diponto."
         }
         
         mensagem_system = f"""{perfis.get(perfil, perfis['geral'])}
