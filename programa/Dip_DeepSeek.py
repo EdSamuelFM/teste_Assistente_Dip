@@ -26,7 +26,7 @@ ARQUIVOS_JSON = {
         'marketing': 'base_conhecimento_marketing.json',
         'suporte': 'base_conhecimento_suporte.json',
         'vendas': 'base_conhecimento_vendas.json',
-        'dev': 'base_conheciemnto_dev.json'    
+        'dev': 'base_conhecimento_dev.json'    
     },
     'historico': {
         'geral': 'historico_conversas.json',
@@ -34,7 +34,7 @@ ARQUIVOS_JSON = {
         'marketing': 'historico_conversas_marketing.json',
         'suporte': 'historico_conversas_suporte.json',
         'vendas': 'historico_conversas_vendas.json',
-        'dev': 'historico_conversas.dev.json'
+        'dev': 'historico_conversas_dev.json'
     }
 }
 
