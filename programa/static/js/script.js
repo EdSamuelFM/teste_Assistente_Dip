@@ -5,47 +5,52 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (path.includes('marketing')) perfil = 'marketing';
     else if (path.includes('suporte')) perfil = 'suporte';
-    else if (path.includes('vendas')) perfil = 'vendas'; 
+    else if (path.includes('vendas')) perfil = 'vendas';
     else if (path.includes('financeiro')) perfil = 'financeiro';
     else if (path.includes('dev')) perfil = 'dev';
-
-    const chatInput = document.getElementById('chat-input');
-    const sendButton = document.getElementById('send-button');
-    const chatContainer = document.getElementById('chat-container');
-    const clearHistoryButton = document.getElementById('clear-history-button');
-
-    // Tratamento de erros de extensões
-    window.addEventListener('error', function(e) {
-        if (e.message.includes('lastError') || e.message.includes('message port closed')) {
-            e.preventDefault();
-            return false;
+    
+        // Ativar o link correspondente ao perfil atual
+        document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
+            link.classList.remove('active');
+            if ((perfil === 'marketing' && link.classList.contains('agente_mk')) ||
+                (perfil === 'suporte' && link.classList.contains('agente_sp')) ||
+                (perfil === 'vendas' && link.classList.contains('agente_vd')) ||
+                (perfil === 'financeiro' && link.classList.contains('agente_fc')) ||
+                (perfil === 'dev' && link.classList.contains('agente_dv'))) {
+                link.classList.add('active');
+            }
+        });
+    
+        // Restante das variáveis e funções...
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const chatContainer = document.getElementById('chat-container');
+        const clearHistoryButton = document.getElementById('clear-history-button');
+    
+        // Função para lidar com a troca de perfil - VERSÃO CORRIGIDA
+        function handleProfileChange(e) {
+            try {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                const newPerfil = href.replace('/', '');
+                
+                // Atualiza a classe 'active' nos links
+                document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
+                    link.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Força o recarregamento da página para o novo perfil
+                window.location.href = href;
+            } catch (error) {
+                console.error('Erro ao mudar perfil:', error);
+            }
         }
-    });
-
-    // Função para lidar com a troca de perfil
-    function handleProfileChange(e) {
-        try {
-            e.preventDefault();
-            const href = this.getAttribute('href');
-            const newPerfil = href.replace('/', '');
-            perfil = newPerfil;
-            carregarHistorico(perfil);
-            window.history.pushState({}, '', href);
-            
-            // Atualiza a classe 'active' nos links
-            document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
-                link.classList.remove('active');
-            });
-            this.classList.add('active');
-        } catch (error) {
-            console.error('Erro ao mudar perfil:', error);
-        }
-    }
-
-    // Configura os listeners para os links de perfil
-    document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
-        link.addEventListener('click', handleProfileChange);
-    });
+    
+        // Configura os listeners para os links de perfil
+        document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
+            link.addEventListener('click', handleProfileChange);
+        });
 
     // Listener para o botão de limpar histórico
     clearHistoryButton.addEventListener('click', function() {
