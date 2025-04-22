@@ -179,7 +179,7 @@ def gerar_resposta_bot(mensagens: list, base_conhecimento: dict, resumo_relatori
             'suporte': "Você é um assistente especializado em suporte técnico da empresa Diponto.",
             'vendas': "Você é um assistente especializado em vendas da empresa Diponto.",
             'financeiro': "Você é um assistente especializado em finanças da empresa Diponto.",
-            'geral': "Você é o assistente geral da empresa Diponto."
+            'geral': "Você é o assistente geral da empresa Diponto.",
             'dev': "Você é um assistente especializado em desenvolvimento de landing pagesdos produtos Diponto."
         }
         
