@@ -85,7 +85,7 @@ def vendas():
     return render_template('vendas.html')
 
 @app.route('/dev')
-def vendas():
+def dev():
     return render_template('dev.html')
 
 # Rota para evitar erro 404 do Flutter
