@@ -82,6 +82,10 @@ def financeiro():
 def vendas():
     return render_template('vendas.html')
 
+@app.route('/dev')
+def vendas():
+    return render_template('dev.html')
+
 # Rota para evitar erro 404 do Flutter
 @app.route('/flutter_service_worker.js')
 def flutter_sw():
