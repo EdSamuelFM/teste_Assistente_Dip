@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (path.includes('marketing')) perfil = 'marketing';
     else if (path.includes('suporte')) perfil = 'suporte';
-    else if (path.includes('vendas')) perfil = 'vendas';
-    else if (path.includes('vendas')) perfil = 'vendas';    
+    else if (path.includes('vendas')) perfil = 'vendas'; 
     else if (path.includes('financeiro')) perfil = 'financeiro';
+    else if (path.includes('dev')) perfil = 'dev';
 
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('send-button');
