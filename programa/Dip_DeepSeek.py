@@ -56,9 +56,9 @@ if not os.path.exists(resumo_path):
     with open(resumo_path, 'w', encoding='utf-8') as f:
         json.dump({}, f)
 
-# Configuração segura do cliente DeepSeek
+# Configuração do DeepSeek
 deepseek_client = OpenAI(
-    api_key=os.getenv("DEEPSEEK_API_KEY"),  # Usa variável de ambiente
+    api_key="sk-88c90c0c91c94912b276f19234eacc51",  
     base_url="https://api.deepseek.com/v1",
     timeout=20
 )
