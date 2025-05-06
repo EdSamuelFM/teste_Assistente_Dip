@@ -3,34 +3,6 @@
 @import url('https://fonts.cdnfonts.com/css/nunito');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
 
-.toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 12px 24px;
-    border-radius: 4px;
-    color: white;
-    z-index: 1000;
-    animation: fadeIn 0.3s;
-}
-
-.toast.success {
-    background-color: #4CAF50;
-}
-
-.toast.error {
-    background-color: #F44336;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.loading-indicator {
-    /* Estilo para seu indicador de carregamento */
-}
-
 /* Variáveis de cores */
 :root {
     --cor-laranja: #FFB700;
@@ -46,7 +18,7 @@ body {
     font-family: 'Roboto', sans-serif;
 }
 
-.menu-retratil {
+.menu-overlay {
     display: none;
 }
 
@@ -56,7 +28,6 @@ body {
 .icone:hover {
     color: #666;
     transition: 0.2s;
-    
 }
 
 /* Container de opções */
@@ -83,9 +54,9 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     background-color: var(--cor-laranja);
     height: 100vh;
-    width: 18.75rem; /* 300px */
+    width: 18.75rem;
     position: fixed;
-    left: -15rem; /* -240px */
+    left: -15rem;
     top: 0;
     transition: all 0.3s ease;
     z-index: 100;
@@ -98,7 +69,7 @@ body {
 
 /* Container central */
 .centro {
-    transition: margin-left 0.3s ease;
+    transition: all 0.3s ease;
     width: 100%;
     height: 100%;
     display: flex;
@@ -111,9 +82,7 @@ body {
 
 /* Ajusta o conteúdo central quando a sidebar é aberta */
 #menu-toggle:checked ~ .centro {
-    margin-left: 18.75rem; /* Fixed size sidebar adjustments */
-
-    width: calc(100% - 150px); /* Ajustando a dinamica dependendo do tipo do menu */
+    margin-left: 18.75rem;
 }
 
 .conversa{
@@ -131,12 +100,12 @@ body {
     justify-content: end;
     align-items: center;
     padding: 2vh;
-    height: 10vh;;
+    height: 10vh;
 }
 
 /* Título */
 .titulo {
-    font-size: 5vw; /* Relative size for responsive adjustments */
+    font-size: 5vw;
     color: var(--cor-preto);
     font-family: 'Typo Round Bold Demo', sans-serif;
     margin: 25px;
@@ -195,11 +164,6 @@ body {
     color: inherit;
 }
 
-/* Mantenha a cor original nos strong dentro de mensagens do usuário */
-.message.user strong {
-    color: black;
-}
-
 .message.user {
     align-self: flex-end;
     background-color: var(--cor-laranja);
@@ -215,7 +179,6 @@ body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
-/* Para mensagens do bot (cinza) */
 .message.bot strong {
     color: black;
 }
@@ -236,8 +199,6 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
-
 
 /* Área de texto do chat */
 .texto {
@@ -264,29 +225,10 @@ body {
     border-color: transparent;
 }
 
-/* Efeito hover no botão */
 .button:hover {
     background-color: var(--cor-preto);
     color: var(--cor-laranja);
     transition: 0.5s;
-}
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-    .mensagem {
-        flex-direction: column;
-    }
-    .texto {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    .button {
-        width: 100%;
-        margin-left: 0;
-    }
-    #menu-toggle:checked ~ .centro {
-        margin-left: 0;
-    }
 }
 
 .typing-indicator {
@@ -352,8 +294,6 @@ body {
     font-size: 35px;
 }
 
-
-
 .agente_sp {
     display: flex;
     justify-content: center;
@@ -373,9 +313,26 @@ body {
     font-size: 35px;
 }
 
-
-
 .agente_vd {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 0px;
+    margin-top: 10px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 30px;
+    color: var(--cor-preto);
+    text-decoration: none !important;
+    height: 40px;
+}
+.agente_vd:hover {
+    color: #666;
+    transition: 0.2s;
+    font-size: 35px;
+}
+
+.agente_dv {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -388,13 +345,11 @@ body {
     text-decoration: none;
     height: 40px;
 }
-.agente_vd:hover {
+.agente_dv:hover {
     color: #666;
     transition: 0.2s;
     font-size: 35px;
 }
-
-
 
 .agente_fc {
     display: flex;
@@ -414,8 +369,6 @@ body {
     transition: 0.2s;
     font-size: 35px;
 }
-
-
 
 .agentes {
     display: flex;
@@ -445,27 +398,82 @@ body {
     height: 300px;
 }
 
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 4px;
+    color: white;
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+}
+
+.toast.success {
+    background-color: #4CAF50;
+}
+
+.toast.error {
+    background-color: #F44336;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* Media Queries para Dispositivos Móveis */
 @media (max-width: 768px) {
-    /* Ajustes gerais */
-    body {
-        overflow-x: hidden;
+    /* Menu retrátil - hamburguer para mobile */
+    .menu-retratil {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 99;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--cor-preto);
     }
     
-    /* Sidebar */
+    /* Ajuste da coluna (sidebar) para mobile */
     .coluna {
-        width: 100%;
+        width: 80%;
         left: -100%;
-        height: 100vh;
+        transition: all 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     }
     
+    /* Quando o menu está aberto */
     #menu-toggle:checked ~ .coluna {
         left: 0;
     }
     
+    /* Overlay quando o menu está aberto */
+    #menu-toggle:checked ~ .menu-overlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 98;
+    }
+    
+    /* Ajuste do conteúdo principal quando o menu está aberto */
     #menu-toggle:checked ~ .centro {
-        margin-left: 0;
-        transform: translateX(100%);
+        transform: translateX(80%);
+    }
+    
+    /* Opções do menu */
+    .opcoes {
+        padding-top: 60px;
+    }
+    
+    /* Ajustes gerais */
+    body {
+        overflow-x: hidden;
     }
     
     /* Cabeçalho */
@@ -511,15 +519,6 @@ body {
         height: 40px;
         font-size: 14px;
         padding: 0 15px;
-    }
-    
-    /* Opções do menu */
-    .opcoes {
-        padding: 5vh 0;
-    }
-    
-    .funcoes {
-        font-size: 1rem;
     }
     
     /* Agentes */
