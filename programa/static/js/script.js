@@ -8,49 +8,52 @@ document.addEventListener('DOMContentLoaded', function() {
     else if (path.includes('vendas')) perfil = 'vendas';
     else if (path.includes('financeiro')) perfil = 'financeiro';
     else if (path.includes('dev')) perfil = 'dev';
+
+    // Variáveis de controle de áudio
+    window.audioContext = null;
+    window.audioBufferSource = null;
+    window.isAudioPlaying = false;
     
-        // Ativar o link correspondente ao perfil atual
-        document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
-            link.classList.remove('active');
-            if ((perfil === 'marketing' && link.classList.contains('agente_mk')) ||
-                (perfil === 'suporte' && link.classList.contains('agente_sp')) ||
-                (perfil === 'vendas' && link.classList.contains('agente_vd')) ||
-                (perfil === 'financeiro' && link.classList.contains('agente_fc')) ||
-                (perfil === 'dev' && link.classList.contains('agente_dv'))) {
-                link.classList.add('active');
-            }
-        });
-    
-        // Restante das variáveis e funções...
-        const chatInput = document.getElementById('chat-input');
-        const sendButton = document.getElementById('send-button');
-        const chatContainer = document.getElementById('chat-container');
-        const clearHistoryButton = document.getElementById('clear-history-button');
-    
-        // Função para lidar com a troca de perfil - VERSÃO CORRIGIDA
-        function handleProfileChange(e) {
-            try {
-                e.preventDefault();
-                const href = this.getAttribute('href');
-                const newPerfil = href.replace('/', '');
-                
-                // Atualiza a classe 'active' nos links
-                document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
-                    link.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                // Força o recarregamento da página para o novo perfil
-                window.location.href = href;
-            } catch (error) {
-                console.error('Erro ao mudar perfil:', error);
-            }
+    // Ativar o link correspondente ao perfil atual
+    document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
+        link.classList.remove('active');
+        if ((perfil === 'marketing' && link.classList.contains('agente_mk')) ||
+            (perfil === 'suporte' && link.classList.contains('agente_sp')) ||
+            (perfil === 'vendas' && link.classList.contains('agente_vd')) ||
+            (perfil === 'financeiro' && link.classList.contains('agente_fc')) ||
+            (perfil === 'dev' && link.classList.contains('agente_dv'))) {
+            link.classList.add('active');
         }
+    });
     
-        // Configura os listeners para os links de perfil
-        document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
-            link.addEventListener('click', handleProfileChange);
-        });
+    // Elementos da interface
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const chatContainer = document.getElementById('chat-container');
+    const clearHistoryButton = document.getElementById('clear-history-button');
+    
+    // Função para lidar com a troca de perfil
+    function handleProfileChange(e) {
+        try {
+            e.preventDefault();
+            const href = this.getAttribute('href');
+            const newPerfil = href.replace('/', '');
+            
+            document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
+                link.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            window.location.href = href;
+        } catch (error) {
+            console.error('Erro ao mudar perfil:', error);
+        }
+    }
+    
+    // Configura os listeners para os links de perfil
+    document.querySelectorAll('.agente_mk, .agente_sp, .agente_vd, .agente_dv, .agente_fc').forEach(link => {
+        link.addEventListener('click', handleProfileChange);
+    });
 
     // Listener para o botão de limpar histórico
     clearHistoryButton.addEventListener('click', function() {
@@ -131,12 +134,109 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
-            messageDiv.innerHTML = formatarMensagem(message);
+            
+            const timeMatch = message.match(/\[Tempo de resposta: (.*?)\]/);
+            let cleanMessage = message;
+            let timeText = '';
+            
+            if (timeMatch) {
+                cleanMessage = message.split('[Tempo de resposta:')[0].trim();
+                timeText = `<div class="response-time">${timeMatch[0]}</div>`;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">${formatarMensagem(cleanMessage)}</div>
+                ${timeText}
+                ${sender === 'bot' ? '<div class="audio-control"><i class="fas fa-play"></i></div>' : ''}
+            `;
+            
+            // Adiciona o event listener para o botão de áudio
+            if (sender === 'bot') {
+                const audioButton = messageDiv.querySelector('.audio-control');
+                audioButton.addEventListener('click', function() {
+                    playTextAsAudio(this);
+                });
+            }
+            
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         } catch (error) {
             console.error('Erro ao adicionar mensagem:', error);
         }
+    }
+
+    // Função para reproduzir áudio
+    window.playTextAsAudio = async function(element) {
+        try {
+            // Se já está tocando, para a reprodução
+            if (window.isAudioPlaying) {
+                if (window.audioBufferSource) {
+                    window.audioBufferSource.stop();
+                    window.audioContext.close();
+                }
+                element.innerHTML = '<i class="fas fa-play"></i>';
+                window.isAudioPlaying = false;
+                return;
+            }
+            
+            element.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const messageContent = element.parentElement.querySelector('.message-content').textContent;
+            const cleanText = messageContent.replace(/\[.*?\]/g, '').trim();
+            
+            // Inicializa o contexto de áudio
+            window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Faz a requisição para o áudio
+            const response = await fetch('/generate_audio', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: cleanText })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Erro ao gerar áudio');
+            }
+            
+            const audioData = await response.arrayBuffer();
+            const audioBuffer = await window.audioContext.decodeAudioData(audioData);
+            
+            // Cria e configura a fonte de áudio
+            window.audioBufferSource = window.audioContext.createBufferSource();
+            window.audioBufferSource.buffer = audioBuffer;
+            window.audioBufferSource.connect(window.audioContext.destination);
+            
+            // Configura eventos
+            window.audioBufferSource.onended = () => {
+                element.innerHTML = '<i class="fas fa-play"></i>';
+                window.isAudioPlaying = false;
+                window.audioContext.close();
+            };
+            
+            // Inicia reprodução
+            window.audioBufferSource.start();
+            element.innerHTML = '<i class="fas fa-stop"></i>';
+            window.isAudioPlaying = true;
+            
+        } catch (error) {
+            console.error('Erro ao reproduzir áudio:', error);
+            element.innerHTML = '<i class="fas fa-play"></i>';
+            showToast('Erro ao reproduzir mensagem: ' + error.message, 'error');
+            
+            if (window.audioContext) {
+                window.audioContext.close();
+            }
+        }
+    };
+    // Função para parar a reprodução de áudio
+    function stopAudio() {
+        if (window.audioBufferSource) {
+            window.audioBufferSource.stop();
+            window.audioBufferSource.disconnect();
+            window.audioBufferSource = null;
+        }
+        window.isAudioPlaying = false;
     }
 
     function formatarMensagem(texto) {
