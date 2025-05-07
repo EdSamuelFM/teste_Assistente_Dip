@@ -429,24 +429,30 @@ body {
         display: block;
         position: fixed;
         top: 20px;
-        left: 20px;
+        left: 5px;
         z-index: 99;
         font-size: 24px;
         cursor: pointer;
         color: var(--cor-preto);
     }
+
+    .icone {
+        display: block;
+        position: fixed
+        left -0px;
+    }
     
     /* Ajuste da coluna (sidebar) para mobile */
     .coluna {
-        width: 80%;
-        left: -100%;
+        width: 50%;
+        left: -50%;
         transition: all 0.3s ease;
         box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     }
     
     /* Quando o menu está aberto */
     #menu-toggle:checked ~ .coluna {
-        left: 0;
+        left: 10;
     }
     
     /* Overlay quando o menu está aberto */
@@ -454,8 +460,8 @@ body {
         display: block;
         position: fixed;
         top: 0;
-        left: 0;
-        width: 100%;
+        left: 50;
+        width: 0%;
         height: 100%;
         background: rgba(0,0,0,0.5);
         z-index: 98;
@@ -463,7 +469,7 @@ body {
     
     /* Ajuste do conteúdo principal quando o menu está aberto */
     #menu-toggle:checked ~ .centro {
-        transform: translateX(80%);
+        transform: translateX(0%);
     }
     
     /* Opções do menu */
@@ -617,4 +623,36 @@ body {
     input, select, textarea {
         font-size: 16px;
     }
+}
+
+/* Adicione ao seu arquivo style.css */
+.message .audio-control {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    cursor: pointer;
+    color: #666;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.message .audio-control:hover {
+    color: #333;
+    transform: scale(1.1);
+}
+
+.message .message-content {
+    margin-right: 30px;
+}
+
+.response-time {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.message.bot {
+    position: relative;
+    padding-right: 40px;
 }
