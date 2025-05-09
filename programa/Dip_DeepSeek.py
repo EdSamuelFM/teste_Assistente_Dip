@@ -2,40 +2,12 @@ import os
 import time
 import json
 import traceback
-from flask import Flask, make_response, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from openai import OpenAI
-from transformers import AutoProcessor, BarkModel
-import torch
-from scipy.io.wavfile import write as write_wav
-import numpy as np
-from datetime import datetime
-import io
-import wave
-import numpy as np
-import soundfile as sf
-
-
-
 
 app = Flask(__name__, 
             template_folder='templates',
             static_folder='static')
-
-
-
-processor = None
-bark_model = None
-def load_bark_model():
-    global processor, bark_model
-    if processor is None or bark_model is None:
-        print("Carregando modelo Bark...")
-        processor = AutoProcessor.from_pretrained("suno/bark-small")
-        bark_model = BarkModel.from_pretrained("suno/bark-small").to("cuda" if torch.cuda.is_available() else "cpu")
-        print("Modelo Bark carregado!")
-
-# Carrega o modelo e o processador Bark
-processor = AutoProcessor.from_pretrained("suno/bark-small")
-bark_model = BarkModel.from_pretrained("suno/bark-small").to("cuda" if torch.cuda.is_available() else "cpu")
 
 # Configurações de caminhos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -144,8 +116,6 @@ def obter_historico():
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
-        start_time = datetime.now()  # Inicia o timer
-        
         message = request.form['message']
         perfil = request.form.get('perfil', 'geral')
         
@@ -167,7 +137,7 @@ def chat():
         # Adiciona mensagem ao histórico
         historico.append(("user", message))
         
-       # Gera resposta
+        # Gera resposta
         resposta = gerar_resposta_bot(
             mensagens=historico,
             base_conhecimento=base_conhecimento,
@@ -175,57 +145,16 @@ def chat():
             perfil=perfil
         )
         
-        # Calcula o tempo de resposta
-        response_time = (datetime.now() - start_time).total_seconds()
-        
-        # Adiciona tempo de resposta à mensagem
-        resposta_com_tempo = f"{resposta}\n\n[Tempo de resposta: {response_time:.2f} segundos]"
-        
-        
         # Atualiza histórico
-        historico.append(("assistant", resposta_com_tempo))
+        historico.append(("assistant", resposta))
         
         with open(arquivo_historico, 'w', encoding='utf-8') as f:
             json.dump(historico, f, ensure_ascii=False, indent=4)
         
-        return jsonify({
-            "response": resposta_com_tempo,
-            "response_time": response_time
-        })
+        return jsonify({"response": resposta})
     
     except Exception as e:
         print(f"ERRO NO CHAT: {traceback.format_exc()}")
-        return jsonify({"error": str(e)}), 500
-    
-@app.route('/generate_audio', methods=['POST'])
-def generate_audio():
-    try:
-        load_bark_model()  # Carrega o modelo na primeira chamada
-        
-        text = request.json.get('text', '')
-        clean_text = text.split('[Tempo de resposta:')[0].strip()
-        
-        if not clean_text:
-            return jsonify({"error": "Texto não fornecido"}), 400
-        
-        # Gera áudio com Bark
-        inputs = processor(clean_text, voice_preset="v2/pt_speaker_8", return_tensors="pt")
-        audio_array = bark_model.generate(**inputs)
-        audio_array = audio_array.cpu().numpy().squeeze()
-        
-        # Converte para formato compatível com navegadores
-        buffer = io.BytesIO()
-        sf.write(buffer, audio_array, bark_model.generation_config.sample_rate, format='WAV')
-        buffer.seek(0)
-        
-        # Retorna o áudio
-        response = make_response(buffer.read())
-        response.headers['Content-Type'] = 'audio/wav'
-        response.headers['Content-Disposition'] = 'attachment; filename=speech.wav'
-        return response
-        
-    except Exception as e:
-        print(f"ERRO NA GERAÇÃO DE ÁUDIO: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/chat/limpar_historico', methods=['POST'])
@@ -308,5 +237,5 @@ def teste_api():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, threaded=True)
